@@ -17,8 +17,9 @@ namespace Lucky_Fighters
 
         
         List<Player> players;
+        List<string> characters;
 
-        // holds the starting point for the level
+        // holds the starting point for the level for each player
         private List<Vector2> starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
 
@@ -28,10 +29,10 @@ namespace Lucky_Fighters
         }
         ContentManager content;
 
-        private const int TileWidth = 64;
-        private const int TileHeight = 64;
-        private const int TilesPerRow = 5;
-        private const int NumRowsPerSheet = 5;
+        private const int TileWidth = 96;
+        private const int TileHeight = 96;
+        private const int TilesPerRow = 14;
+        private const int NumRowsPerSheet = 8;
 
         private Random random = new Random(1337);
 
@@ -45,7 +46,7 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path)
+        public Map(IServiceProvider _serviceProvider, string path, List<string> characters)
         {
             // Create a new content manager to load content used just by this level.
             content = new ContentManager(_serviceProvider, "Content");
@@ -55,6 +56,7 @@ namespace Lucky_Fighters
             //tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             //tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
 
+            this.characters = characters;
 
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -135,13 +137,13 @@ namespace Lucky_Fighters
 
                 // player start point
                 case '1':
-                    return LoadStartTile(_x, _y, 1);
+                    return LoadStartTile(_x, _y, PlayerIndex.One);
                 case '2':
-                    return LoadStartTile(_x, _y, 2);
+                    return LoadStartTile(_x, _y, PlayerIndex.Two);
                 case '3':
-                    return LoadStartTile(_x, _y, 3);
+                    return LoadStartTile(_x, _y, PlayerIndex.Three);
                 case '4':
-                    return LoadStartTile(_x, _y, 4);
+                    return LoadStartTile(_x, _y, PlayerIndex.Four);
 
                 // Unknown tile type character
                 default:
@@ -153,13 +155,31 @@ namespace Lucky_Fighters
         /// <summary>
         /// Instantiates a player, puts him in the level, and remembers where to put him when he is resurrected.
         /// </summary>
-        private Tile LoadStartTile(int _x, int _y, int index)
+        private Tile LoadStartTile(int _x, int _y, PlayerIndex index)
         {
-            if (players[index] != null)
+            if (players[((int)index)] != null)
                 throw new NotSupportedException("A level may only have one starting point");
 
-            starts[index] = new Vector2((_x * 64) + 48, (_y * 64) + 16);
-            player[index] = new Player(this, starts[index]);
+            Vector2 start = new Vector2((_x * 64) + 48, (_y * 64) + 16);
+            starts[(int)index] = start;
+            switch (characters[(int)index])
+            {
+                case "swordfighter":
+                    players[(int)index] = new SwordFighter(this, start, index, 0);
+                    break;
+                case "archer":
+                    players[(int)index] = new Archer(this, start, index, 0);
+                    break;
+                case "ninja":
+                    players[(int)index] = new Ninja(this, start, index, 0);
+                    break;
+                case "wizard":
+                    players[(int)index] = new Wizard(this, start, index, 0);
+                    break;
+                case "muscleman":
+                    players[(int)index] = new Muscleman(this, start, index, 0);
+                    break;
+            }
 
             return new Tile(String.Empty, 0, TileCollision.Passable);
         }
@@ -200,9 +220,14 @@ namespace Lucky_Fighters
 
         public void Update(GameTime _gameTime)
         {
-            player.Update(_gameTime);
-            if (player.IsCompletelyDead)
-                player.Reset(start);
+            int x = 0;
+            foreach (Player player in players)
+            {
+                player.Update(_gameTime);
+                if (player.IsCompletelyDead)
+                    player.Reset(starts[x]);
+                x++;
+            }
         }
 
 
@@ -214,7 +239,7 @@ namespace Lucky_Fighters
         {
             DrawTiles(spriteBatch);
             foreach (Player player in players)
-                player.Draw(gameTime, spriteBatch);
+                player.Draw(spriteBatch, gameTime);
         }
 
         private void DrawTiles(SpriteBatch spriteBatch)
