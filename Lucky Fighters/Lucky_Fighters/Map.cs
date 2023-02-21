@@ -126,7 +126,7 @@ namespace Lucky_Fighters
                     return new Tile(String.Empty, 0, TileCollision.Passable);
 
                 // Platform blocks
-                case 'B':
+                case 'p':
                     return LoadVarietyTile("Platforms", 0, 5);
 
                 // Impassable block
@@ -134,8 +134,14 @@ namespace Lucky_Fighters
                     return LoadVarietyTile("Blocks", 0, 5);
 
                 // player start point
-                case '+':
-                    return LoadStartTile(_x, _y, index);
+                case '1':
+                    return LoadStartTile(_x, _y, 1);
+                case '2':
+                    return LoadStartTile(_x, _y, 2);
+                case '3':
+                    return LoadStartTile(_x, _y, 3);
+                case '4':
+                    return LoadStartTile(_x, _y, 4);
 
                 // Unknown tile type character
                 default:
@@ -197,87 +203,18 @@ namespace Lucky_Fighters
             player.Update(_gameTime);
             if (player.IsCompletelyDead)
                 player.Reset(start);
-            UpdateEnemies(_gameTime);
-            UpdateCollectables(_gameTime);
         }
 
-        private void UpdateCollectables(GameTime gameTime)
-        {
-            foreach (Collectable collectable in collectables)
-            {
-                collectable.Update(gameTime);
-                if (player.IsAlive && collectable.IsAlive)
-                {
-                    if (collectable.BoundingRectangle.Intersects(player.BoundingRectangle))
-                    {
-                        OnCollectableCollected(collectable);
-                    }
-                }
-            }
-            if (collectedCollectables.Count > 0)
-            {
-                foreach (Collectable collectable in collectedCollectables)
-                {
-                    collectables.Remove(collectable);
-                }
-                collectedCollectables.Clear();
-            }
-        }
 
-        private void OnCollectableCollected(Collectable c)
+        public void OnPlayerKilled(int index)
         {
-            c.OnKilled();
-            collectedCollectables.Add(c);
+            players[index].OnKilled();
         }
-
-        private void UpdateEnemies(GameTime gameTime)
-        {
-            foreach (Enemy enemy in enemies)
-            {
-                enemy.Update(gameTime);
-                if (player.IsAlive && enemy.IsAlive)
-                {
-                    if (enemy.BoundingRectangle.Intersects(player.BoundingRectangle))
-                    {
-                        if (enemy.BoundingRectangle.Bottom > player.BoundingRectangle.Bottom)
-                            OnEnemyKilled(enemy);
-                        else
-                            OnPlayerKilled();
-                    }
-                }
-                else
-                {
-                    if (enemy.IsCompletelyDead)
-                        deadEnemies.Add(enemy);
-                }
-            }
-            if (deadEnemies.Count > 0)
-            {
-                foreach (Enemy deadEnemy in deadEnemies)
-                {
-                    enemies.Remove(deadEnemy);
-                }
-                deadEnemies.Clear();
-            }
-        }
-
-        public void OnPlayerKilled()
-        {
-            player.OnKilled();
-        }
-        public void OnEnemyKilled(Enemy enemy)
-        {
-            enemy.OnKilled();
-        }
-
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             DrawTiles(spriteBatch);
-            player.Draw(gameTime, spriteBatch);
-            foreach (Collectable collectable in collectables)
-                collectable.Draw(gameTime, spriteBatch);
-            foreach (Enemy enemy in enemies)
-                enemy.Draw(gameTime, spriteBatch);
+            foreach (Player player in players)
+                player.Draw(gameTime, spriteBatch);
         }
 
         private void DrawTiles(SpriteBatch spriteBatch)
