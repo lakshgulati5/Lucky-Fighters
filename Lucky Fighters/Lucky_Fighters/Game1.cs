@@ -20,6 +20,7 @@ namespace Lucky_Fighters
         SpriteBatch spriteBatch;
 
         Map map;
+        FighterSelection fighterSelection;
 
         public Game1()
         {
@@ -39,6 +40,7 @@ namespace Lucky_Fighters
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            fighterSelection = new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
 
             base.Initialize();
         }
@@ -55,6 +57,7 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             // test map
             map = new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter" });
+            fighterSelection.LoadContent();
         }
 
         /// <summary>
@@ -78,7 +81,7 @@ namespace Lucky_Fighters
                 this.Exit();
 
             // TODO: Add your update logic here
-            map.Update(gameTime);
+            //map.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -93,7 +96,9 @@ namespace Lucky_Fighters
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
-            map.Draw(gameTime, spriteBatch);
+            //map.Draw(gameTime, spriteBatch);
+            fighterSelection.Draw(gameTime, spriteBatch);
+
             spriteBatch.End();
 
             base.Draw(gameTime);

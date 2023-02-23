@@ -17,7 +17,7 @@ namespace Lucky_Fighters
 
         
         Player[] players;
-        string[] characters;
+        string[] fighters;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -42,7 +42,7 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] characters)
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters)
         {
             // Create a new content manager to load content used just by this level.
             Content = new ContentManager(_serviceProvider, "Content");
@@ -52,9 +52,9 @@ namespace Lucky_Fighters
             tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
 
-            this.characters = characters;
-            players = new Player[characters.Length];
-            starts = new Vector2[characters.Length];
+            this.fighters = fighters;
+            players = new Player[fighters.Length];
+            starts = new Vector2[fighters.Length];
 
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -160,7 +160,7 @@ namespace Lucky_Fighters
 
             Vector2 start = new Vector2((_x * Tile.Width) + 48, (_y * Tile.Height) + 16);
             starts[(int)index] = start;
-            switch (characters[(int)index])
+            switch (fighters[(int)index])
             {
                 case "swordfighter":
                     players[(int)index] = new SwordFighter(this, start, index, 0);

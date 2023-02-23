@@ -71,6 +71,7 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FighterSelection.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
