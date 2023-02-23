@@ -27,8 +27,8 @@ namespace Lucky_Fighters
 
         private const int TileWidth = 96;
         private const int TileHeight = 96;
-        private const int TilesPerRow = 14;
-        private const int NumRowsPerSheet = 8;
+        private const int TilesPerRow = 5;
+        private const int NumRowsPerSheet = 5;
 
         private Random random = new Random(1337);
 
@@ -49,8 +49,8 @@ namespace Lucky_Fighters
 
             // load the textures
             tileSheets = new Dictionary<string, Texture2D>();
-            //tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
-            //tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
+            tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
+            tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
 
             this.characters = characters;
             players = new Player[characters.Length];
@@ -127,11 +127,11 @@ namespace Lucky_Fighters
 
                 // Platform blocks
                 case 'p':
-                    return LoadVarietyTile("Platforms", 0, 5);
+                    return LoadVarietyTile("Platforms", 0);
 
                 // Impassable block
                 case 'b':
-                    return LoadVarietyTile("Blocks", 0, 5);
+                    return LoadVarietyTile("Blocks", 0);
 
                 // player start point
                 case '1':
@@ -158,7 +158,7 @@ namespace Lucky_Fighters
             if (players[(int)index] != null)
                 throw new NotSupportedException("A level may only have one starting point");
 
-            Vector2 start = new Vector2((_x * 64) + 48, (_y * 64) + 16);
+            Vector2 start = new Vector2((_x * Tile.Width) + 48, (_y * Tile.Height) + 16);
             starts[(int)index] = start;
             switch (characters[(int)index])
             {
@@ -184,19 +184,17 @@ namespace Lucky_Fighters
             return new Tile(String.Empty, 0, TileCollision.Passable);
         }
 
-        private Tile LoadVarietyTile(string _tileSheetName, int _colorRow, int _variationCount)
+        private Tile LoadVarietyTile(string _tileSheetName, int index)
         {
-            int index = random.Next(_variationCount);
-            // get index on tile to rect dicitonary
-            int tileSheetIndex = _colorRow + index;
+            // get index on tile to rect dictionary
             switch (_tileSheetName)
             {
                 case "Blocks":
-                    return new Tile(_tileSheetName, tileSheetIndex, TileCollision.Impassable);
+                    return new Tile(_tileSheetName, index, TileCollision.Impassable);
                 case "Platforms":
-                    return new Tile(_tileSheetName, tileSheetIndex, TileCollision.Platform);
+                    return new Tile(_tileSheetName, index, TileCollision.Platform);
             }
-            return new Tile(_tileSheetName, tileSheetIndex, TileCollision.Passable);
+            return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
         public TileCollision GetCollision(int _x, int _y)

@@ -25,8 +25,8 @@ namespace Lucky_Fighters
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.PreferredBackBufferWidth = 1280;
-            graphics.PreferredBackBufferHeight = 720;
+            graphics.PreferredBackBufferWidth = 1344;
+            graphics.PreferredBackBufferHeight = 768;
             // allows for 14x8 map
         }
 

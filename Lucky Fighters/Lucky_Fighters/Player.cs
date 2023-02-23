@@ -15,10 +15,11 @@ namespace Lucky_Fighters
     abstract class Player
     {
         // constants
-        const float MoveAcceleration = 500f;
-        const float MaxMoveSpeed = 200f;
-        const float DragFactor = .6f;
-        const float Gravity = 300f;
+        const float MoveAcceleration = 6000f;
+        const float MaxMoveSpeed = 400f;
+        const float DragFactor = 8f;
+        const float Gravity = 2000f;
+        const float JumpPower = 800f;
 
         const float MaxHealth = 100f;
         const float AdditionalHealthRegen = 1f;
@@ -27,11 +28,13 @@ namespace Lucky_Fighters
         const float DodgeCooldown = .8f;
         const float BlockDuration = .3f;
         const float BlockCooldown = .8f;
+        const float TriggerTolerance = .9f;
 
         // player identifiers
         PlayerIndex playerIndex;
         int teamId;
         GamePadState oldGamePad;
+        Map Map;
 
         // combat and movement info
         public Vector2 Position;
@@ -63,6 +66,9 @@ namespace Lucky_Fighters
         float blockingTime;
         float blockingCooldown;
 
+        public bool IsOnGround { get; private set; }
+        float previousBottom;
+
         /// <summary>
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
@@ -73,7 +79,8 @@ namespace Lucky_Fighters
             get
             {
                 // TODO implement
-                return new Rectangle();
+                Rectangle rect = Rectangle;
+                return new Rectangle((int)(rect.X - Origin.X), (int)(rect.Y - Origin.Y), rect.Width, rect.Height);
             }
         }
 
@@ -83,7 +90,8 @@ namespace Lucky_Fighters
         {
             get
             {
-                return new Rectangle(frameIndex % framesPerRow * frameWidth, frameIndex / framesPerRow * frameHeight, frameWidth, frameHeight);
+                int x = frameIndex % framesPerRow, y = frameIndex / framesPerRow;
+                return new Rectangle(x * frameWidth, y * frameHeight, frameWidth, frameHeight);
             }
         }
         Rectangle Rectangle
@@ -106,10 +114,11 @@ namespace Lucky_Fighters
 
         public Player(Map map, Vector2 start, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId)
         {
+            Map = map;
             this.frameWidth = frameWidth;
             this.frameHeight = frameHeight;
             this.framesPerRow = framesPerRow;
-            this.frameIndex = 0;
+            frameIndex = 0;
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             this.playerIndex = playerIndex;
             this.teamId = teamId;
@@ -151,6 +160,7 @@ namespace Lucky_Fighters
         /// </summary>
         private void Block()
         {
+            Console.WriteLine("Blocked");
             // TODO implement
         }
 
@@ -159,6 +169,7 @@ namespace Lucky_Fighters
         /// </summary>
         private void Dodge()
         {
+            Console.WriteLine("Dodged");
             // TODO implement
         }
 
@@ -167,7 +178,8 @@ namespace Lucky_Fighters
         /// </summary>
         private void Jump()
         {
-            // TODO implement
+            Console.WriteLine("Jumped");
+            Velocity.Y = -JumpPower;
         }
 
         private void GetInput()
@@ -176,6 +188,28 @@ namespace Lucky_Fighters
             movement = gamePad.ThumbSticks.Left.X;
 
             // TODO check for attacks and other input
+            if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+            {
+                Jump();
+            }
+            if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released)
+            {
+                Attack();
+            }
+            if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
+            {
+                // TODO add check for luck bar
+                SpecialAttack();
+            }
+            if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+            {
+                Dodge();
+            }
+            if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
+            {
+                Block();
+            }
 
             oldGamePad = gamePad;
         }
@@ -184,6 +218,7 @@ namespace Lucky_Fighters
         {
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            GetInput();
             DoPhysics(elapsed);
 
             AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen);
@@ -194,18 +229,92 @@ namespace Lucky_Fighters
         /// </summary>
         private void DoPhysics(float elapsed)
         {
+            Vector2 previousPosition = Position;
+
             // do the x velocity
             Velocity.X += movement * MoveAcceleration * elapsed;
             Velocity.X *= 1 - DragFactor * elapsed;
             Velocity.X = MathHelper.Clamp(Velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
 
+            Velocity.Y += Gravity * elapsed;
+
             Position += Velocity * elapsed;
 
+            HandleCollisions();
+
+            if (Position.X == previousPosition.X)
+                Velocity.X = 0;
+
+            if (Position.Y == previousPosition.Y || IsOnGround)
+                Velocity.Y = 0;
+        }
+
+        private void HandleCollisions()
+        {
+            // Get the player's bounding rectangle and find neighboring tiles
+            Rectangle bounds = Hitbox;
+            int leftTile = (int)Math.Floor((float)bounds.Left / Tile.Width);
+            int rightTile = (int)Math.Ceiling((float)bounds.Right / Tile.Width) - 1;
+            int topTile = (int)Math.Floor((float)bounds.Top / Tile.Height);
+            int bottomTile = (int)Math.Ceiling((float)bounds.Bottom / Tile.Height) - 1;
+
+            // reset flag to search for ground collisions
+            IsOnGround = false;
+
+            // for each potentially colliding tile,
+            for (int y = topTile; y <= bottomTile; y++)
+            {
+                for (int x = leftTile; x <= rightTile; x++)
+                {
+                    // if this tile is collidable
+                    TileCollision collision = Map.GetCollision(x, y);
+                    if (collision != TileCollision.Passable)
+                    {
+                        // determine collision depth (with direction) and magnitude
+                        Rectangle tileBounds = Map.GetBounds(x, y);
+                        Vector2 depth = bounds.GetIntersectionDepth(tileBounds);
+                        if (depth != Vector2.Zero)
+                        {
+                            float absDepthX = Math.Abs(depth.X);
+                            float absDepthY = Math.Abs(depth.Y);
+
+                            // resolve the collision along the shallow axis
+                            if (absDepthY < absDepthX || collision == TileCollision.Platform)
+                            {
+                                // if we crossed the top of a tile, we are on the ground
+                                if (previousBottom <= tileBounds.Top)
+                                    IsOnGround = true;
+
+                                // ignore platforms, unless we are on the ground
+                                if (collision == TileCollision.Impassable || IsOnGround)
+                                {
+                                    // resolve the collision along the y axis
+                                    Position = new Vector2(Position.X, Position.Y + depth.Y);
+
+                                    // perform further collisions with the new bounds
+                                    bounds = Hitbox;
+                                }
+                            }
+                            else if (collision == TileCollision.Impassable) // ignore platforms
+                            {
+                                // resolve the collision along the x axis
+                                Position = new Vector2(Position.X + depth.X, Position.Y);
+
+                                // perform further collisions with the new bounds
+                                bounds = Hitbox;
+                            }
+                        }
+                    }
+                }
+            }
+
+            previousBottom = bounds.Bottom;
         }
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
+            Console.WriteLine(Hitbox + " " + Rectangle + " " + SourceRectangle);
         }
 
         public void OnKilled()
