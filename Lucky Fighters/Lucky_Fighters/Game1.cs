@@ -19,6 +19,8 @@ namespace Lucky_Fighters
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        Map map;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -51,6 +53,8 @@ namespace Lucky_Fighters
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            // test map
+            map = new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter" });
         }
 
         /// <summary>
@@ -74,6 +78,7 @@ namespace Lucky_Fighters
                 this.Exit();
 
             // TODO: Add your update logic here
+            map.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -87,6 +92,9 @@ namespace Lucky_Fighters
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             // TODO: Add your drawing code here
+            spriteBatch.Begin();
+            map.Draw(gameTime, spriteBatch);
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

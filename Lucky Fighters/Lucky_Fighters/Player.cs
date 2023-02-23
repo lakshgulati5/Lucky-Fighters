@@ -39,6 +39,11 @@ namespace Lucky_Fighters
         float movement;
         public float Health { get; private set; }
         public float AdditionalHealth { get; private set; }
+        public bool IsDead
+        {
+            get => Health <= 0;
+        }
+        public bool IsCompletelyDead { get; private set; }
         public float Luck { get; private set; }
         
         bool sprinting;
@@ -86,7 +91,7 @@ namespace Lucky_Fighters
             get
             {
                 // TODO implement
-                return new Rectangle();
+                return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
             }
         }
         Vector2 Origin
@@ -99,10 +104,12 @@ namespace Lucky_Fighters
         int framesPerRow;
         int frameIndex;
 
-        public Player(Map map, Vector2 start, int frameWidth, int frameHeight, string spriteSheetName, PlayerIndex playerIndex, int teamId)
+        public Player(Map map, Vector2 start, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId)
         {
             this.frameWidth = frameWidth;
             this.frameHeight = frameHeight;
+            this.framesPerRow = framesPerRow;
+            this.frameIndex = 0;
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             this.playerIndex = playerIndex;
             this.teamId = teamId;
@@ -199,6 +206,16 @@ namespace Lucky_Fighters
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
+        }
+
+        public void OnKilled()
+        {
+            
+        }
+
+        public void Reset(Vector2 start)
+        {
+
         }
     }
 }
