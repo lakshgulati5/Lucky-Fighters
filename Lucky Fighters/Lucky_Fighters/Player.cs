@@ -174,6 +174,10 @@ namespace Lucky_Fighters
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
             movement = gamePad.ThumbSticks.Left.X;
+            if (movement < 0)
+                flip = SpriteEffects.FlipHorizontally;
+            else
+                flip = SpriteEffects.None;
 
             // TODO check for attacks and other input
 
@@ -184,6 +188,7 @@ namespace Lucky_Fighters
         {
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+            GetInput();
             DoPhysics(elapsed);
 
             AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen);
