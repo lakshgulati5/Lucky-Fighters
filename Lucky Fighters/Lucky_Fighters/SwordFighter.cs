@@ -14,7 +14,7 @@ namespace Lucky_Fighters
 {
     class SwordFighter : Player
     {
-        public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 96, 128, "swordfightersheet", playerIndex, teamId)
+        public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
         {
             
         }

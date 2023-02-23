@@ -16,18 +16,14 @@ namespace Lucky_Fighters
         public List<Rectangle> TileDefinitions;
 
         
-        List<Player> players;
-        List<string> characters;
+        Player[] players;
+        string[] characters;
 
         // holds the starting point for the level for each player
-        private List<Vector2> starts;
+        private Vector2[] starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
 
-        public ContentManager Content
-        {
-            get { return content; }
-        }
-        ContentManager content;
+        public ContentManager Content { get; }
 
         private const int TileWidth = 96;
         private const int TileHeight = 96;
@@ -46,10 +42,10 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, List<string> characters)
+        public Map(IServiceProvider _serviceProvider, string path, string[] characters)
         {
             // Create a new content manager to load content used just by this level.
-            content = new ContentManager(_serviceProvider, "Content");
+            Content = new ContentManager(_serviceProvider, "Content");
 
             // load the textures
             tileSheets = new Dictionary<string, Texture2D>();
@@ -57,6 +53,8 @@ namespace Lucky_Fighters
             //tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
 
             this.characters = characters;
+            players = new Player[characters.Length];
+            starts = new Vector2[characters.Length];
 
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -157,7 +155,7 @@ namespace Lucky_Fighters
         /// </summary>
         private Tile LoadStartTile(int _x, int _y, PlayerIndex index)
         {
-            if (players[((int)index)] != null)
+            if (players[(int)index] != null)
                 throw new NotSupportedException("A level may only have one starting point");
 
             Vector2 start = new Vector2((_x * 64) + 48, (_y * 64) + 16);
@@ -167,6 +165,7 @@ namespace Lucky_Fighters
                 case "swordfighter":
                     players[(int)index] = new SwordFighter(this, start, index, 0);
                     break;
+                    /*
                 case "archer":
                     players[(int)index] = new Archer(this, start, index, 0);
                     break;
@@ -179,6 +178,7 @@ namespace Lucky_Fighters
                 case "muscleman":
                     players[(int)index] = new Muscleman(this, start, index, 0);
                     break;
+                */
             }
 
             return new Tile(String.Empty, 0, TileCollision.Passable);
