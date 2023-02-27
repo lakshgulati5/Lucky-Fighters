@@ -12,22 +12,50 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
+    // a task that needs to be completed after a delay
+    class Task
+    {
+        private float toWait;
+        public TaskAction OnCompleted;
+
+        public delegate void TaskAction(Task previousTask);
+
+        public bool IsCompleted => toWait < 0f;
+
+        public Task(float delay, TaskAction action)
+        {
+            toWait = delay;
+            OnCompleted = action;
+        }
+
+        public Task(Task previous, float delay, TaskAction action) : this(delay + previous.toWait, action) { }
+
+        public void Update(float elapsed)
+        {
+            toWait -= elapsed;
+        }
+    }
+
     abstract class Player
     {
         // constants
         const float MoveAcceleration = 6000f;
         const float MaxMoveSpeed = 400f;
-        const float DragFactor = 8f;
+        const float DragFactor = 10f;
         const float Gravity = 2000f;
         const float JumpPower = 800f;
+        const float JumpTolerance = .1f;
 
         const float MaxHealth = 100f;
         const float AdditionalHealthRegen = 1f;
 
+        // cooldowns will run down during the duration
+        // therefore, cooldowns should be >= the duration
         const float DodgeDuration = .3f;
         const float DodgeCooldown = .8f;
-        const float BlockDuration = .3f;
-        const float BlockCooldown = .8f;
+        const float BlockDuration = .5f;
+        const float BlockCooldown = 1f;
+        const float BlockDamageFactor = .5f;
         const float TriggerTolerance = .9f;
 
         // player identifiers
@@ -40,6 +68,8 @@ namespace Lucky_Fighters
         public Vector2 Position;
         public Vector2 Velocity;
         float movement;
+        // TODO implement
+        float weightMultiplier;
         public float Health { get; private set; }
         public float AdditionalHealth { get; private set; }
         public bool IsDead
@@ -51,18 +81,17 @@ namespace Lucky_Fighters
         
         bool sprinting;
         bool ducking;
+        float jumpingInput;
+
+        public float AttackCooldown { get; protected set; }
+        public float SpecialCooldown { get; protected set; }
         
-        bool IsDodging
-        {
-            get => dodgingTime > 0;
-        }
+        bool IsDodging => dodgingTime > 0;
+        
         float dodgingTime;
         float dodgingCooldown;
         
-        bool IsBlocking
-        {
-            get => blockingTime > 0;
-        }
+        bool IsBlocking => blockingTime > 0;
         float blockingTime;
         float blockingCooldown;
 
@@ -74,18 +103,25 @@ namespace Lucky_Fighters
         /// </summary>
         public float DisabledTime;
 
-        public Rectangle Hitbox
+        List<Task> tasks;
+
+        // virtual allows this to be overridden by fighter subclasses
+        public virtual Rectangle Hitbox
         {
             get
             {
                 // TODO implement
                 Rectangle rect = Rectangle;
-                return new Rectangle((int)(rect.X - Origin.X), (int)(rect.Y - Origin.Y), rect.Width, rect.Height);
+                int paddingX = 10, paddingY = 2;
+                return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY), rect.Width - paddingX * 2, rect.Height);
             }
         }
 
         // for subclasses and rendering
         Texture2D spriteSheet;
+        /// <summary>
+        /// The source rectangle, given the current frame index
+        /// </summary>
         Rectangle SourceRectangle
         {
             get
@@ -94,11 +130,13 @@ namespace Lucky_Fighters
                 return new Rectangle(x * frameWidth, y * frameHeight, frameWidth, frameHeight);
             }
         }
+        /// <summary>
+        /// The rectangle to be used for drawing
+        /// </summary>
         Rectangle Rectangle
         {
             get
             {
-                // TODO implement
                 return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
             }
         }
@@ -112,9 +150,10 @@ namespace Lucky_Fighters
         int framesPerRow;
         int frameIndex;
 
-        public Player(Map map, Vector2 start, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId)
+        public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId)
         {
             Map = map;
+            this.weightMultiplier = weightMultiplier;
             this.frameWidth = frameWidth;
             this.frameHeight = frameHeight;
             this.framesPerRow = framesPerRow;
@@ -123,16 +162,42 @@ namespace Lucky_Fighters
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
+            tasks = new List<Task>();
+
             oldGamePad = GamePad.GetState(playerIndex);
+            Reset(start);
+        }
+
+        public void AddTask(Task task)
+        {
+            tasks.Add(task);
+        }
+
+        public bool IsPlayerFriendly(Player other)
+        {
+            return teamId == other.teamId;
+        }
+
+        public void OnKilled()
+        {
+            // TODO implement
+            
+        }
+
+        public void Reset(Vector2 start)
+        {
+            // TODO implement
             Position = start;
             Velocity = Vector2.Zero;
 
             Health = MaxHealth;
             AdditionalHealth = MaxHealth;
+            IsCompletelyDead = false;
             Luck = 0f;
 
             sprinting = false;
             ducking = false;
+            jumpingInput = 0f;
             dodgingTime = 0f;
             dodgingCooldown = 0f;
             blockingTime = 0f;
@@ -140,9 +205,34 @@ namespace Lucky_Fighters
             DisabledTime = 0f;
         }
 
-        public bool IsPlayerFriendly(Player other)
+        /// <summary>
+        /// Called when this player is hit by an enemy player's attack
+        /// </summary>
+        /// <param name="damage">Ranges from 0 to 1</param>
+        public void TakeDamage(float damage)
         {
-            return teamId == other.teamId;
+            if (damage == 0)
+                return;
+
+            if (IsDodging)
+                return;
+
+            if (IsBlocking)
+            {
+                damage *= BlockDamageFactor;
+            }
+
+            // damage to deal to the second health bar
+            float additionalHealthDamage = Math.Min(damage, AdditionalHealth);
+            AdditionalHealth -= additionalHealthDamage;
+            Health -= damage - additionalHealthDamage;
+
+        }
+
+        public Rectangle GetAdjustedAttackHitbox(Rectangle attackHitbox)
+        {
+            // TODO implement
+            return attackHitbox;
         }
 
         /// <summary>
@@ -156,12 +246,21 @@ namespace Lucky_Fighters
         public abstract void SpecialAttack();
 
         /// <summary>
+        /// Make the player use the ultimate (requires luck bar to be full)
+        /// </summary>
+        public abstract void Ultimate();
+
+        /// <summary>
         /// Make the player block an attack. If timed right, take decreased damage and do a counter attack
         /// </summary>
         private void Block()
         {
+            if (blockingCooldown > 0f)
+                return;
+
             Console.WriteLine("Blocked");
-            // TODO implement
+            blockingTime = BlockDuration;
+            blockingCooldown = BlockCooldown;
         }
 
         /// <summary>
@@ -169,33 +268,45 @@ namespace Lucky_Fighters
         /// </summary>
         private void Dodge()
         {
+            if (dodgingCooldown > 0f)
+                return;
+
             Console.WriteLine("Dodged");
-            // TODO implement
+            dodgingTime = DodgeDuration;
+            dodgingCooldown = DodgeCooldown;
         }
 
         /// <summary>
-        /// Make the player jump
+        /// Tell the game the player wants to jump
         /// </summary>
-        private void Jump()
+        private void SendJump()
         {
-            Console.WriteLine("Jumped");
-            Velocity.Y = -JumpPower;
+            jumpingInput = JumpTolerance;
+        }
+
+        /// <summary>
+        /// Actually make the player jump if conditions are met
+        /// </summary>
+        private void DoJump()
+        {
+            if (IsOnGround)
+            {
+                Velocity.Y = -JumpPower;
+
+                Console.WriteLine("Jumped");
+            }
         }
 
         private void GetInput()
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
             movement = gamePad.ThumbSticks.Left.X;
-            if (movement < 0)
-                flip = SpriteEffects.FlipHorizontally;
-            else
-                flip = SpriteEffects.None;
 
             // TODO check for attacks and other input
             if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
                 gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
             {
-                Jump();
+                SendJump();
             }
             if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released)
             {
@@ -220,10 +331,26 @@ namespace Lucky_Fighters
 
         public void Update(GameTime gameTime)
         {
-            float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            float elapsed = gameTime.GetElapsedSeconds();
 
-            GetInput();
-            DoPhysics(elapsed);
+            if (!IsDead)
+            {
+                AttackCooldown = Math.Max(AttackCooldown - elapsed, 0f);
+                SpecialCooldown = Math.Max(SpecialCooldown - elapsed, 0f);
+                GetInput();
+                DoPhysics(elapsed);
+                for (int i = 0; i < tasks.Count; i++)
+                {
+                    Task task = tasks[i];
+                    task.Update(elapsed);
+                    if (task.IsCompleted)
+                    {
+                        task.OnCompleted(task);
+                        tasks.RemoveAt(i);
+                        i--;
+                    }
+                }
+            }
 
             AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen);
         }
@@ -234,6 +361,13 @@ namespace Lucky_Fighters
         private void DoPhysics(float elapsed)
         {
             Vector2 previousPosition = Position;
+
+            // check if the player wants to jump
+            if (jumpingInput > 0f)
+            {
+                DoJump();
+            }
+            jumpingInput -= elapsed;
 
             // do the x velocity
             Velocity.X += movement * MoveAcceleration * elapsed;
@@ -246,11 +380,17 @@ namespace Lucky_Fighters
 
             HandleCollisions();
 
+
             if (Position.X == previousPosition.X)
                 Velocity.X = 0;
 
             if (Position.Y == previousPosition.Y || IsOnGround)
                 Velocity.Y = 0;
+
+            if (Velocity.X < 0)
+                flip = SpriteEffects.FlipHorizontally;
+            else if (Velocity.X > 0)
+                flip = SpriteEffects.None;
         }
 
         private void HandleCollisions()
@@ -318,16 +458,12 @@ namespace Lucky_Fighters
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
-            Console.WriteLine(Hitbox + " " + Rectangle + " " + SourceRectangle);
+            DrawHealthBar();
         }
 
-        public void OnKilled()
+        public void DrawHealthBar()
         {
-            
-        }
-
-        public void Reset(Vector2 start)
-        {
+            // TODO implement
 
         }
     }

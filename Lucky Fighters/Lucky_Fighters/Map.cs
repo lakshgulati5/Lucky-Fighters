@@ -125,9 +125,18 @@ namespace Lucky_Fighters
                 case '.':
                     return new Tile(String.Empty, 0, TileCollision.Passable);
 
-                // Platform blocks
-                case 'p':
+                // blocks and platforms will have this format:
+                // e.g. platforms: q is [], w is [=, e is ==, r is =], where [ is a border and = is open
+
+                // Platform blocks range from 'q' to 'r'
+                case 'q':
                     return LoadVarietyTile("Platforms", 0);
+                case 'w':
+                    return LoadVarietyTile("Platforms", 1);
+                case 'e':
+                    return LoadVarietyTile("Platforms", 3);
+                case 'r':
+                    return LoadVarietyTile("Platforms", 2);
 
                 // Impassable block
                 case 'b':
