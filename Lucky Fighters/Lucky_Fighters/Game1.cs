@@ -40,7 +40,7 @@ namespace Lucky_Fighters
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            fighterSelection = new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
+            fighterSelection = new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight, 2);
 
             base.Initialize();
         }
@@ -82,6 +82,7 @@ namespace Lucky_Fighters
 
             // TODO: Add your update logic here
             //map.Update(gameTime);
+            fighterSelection.Update();
 
             base.Update(gameTime);
         }
