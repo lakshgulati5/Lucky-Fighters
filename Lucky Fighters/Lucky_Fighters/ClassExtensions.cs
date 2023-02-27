@@ -9,7 +9,7 @@ namespace Lucky_Fighters
     /// <summary>
     /// Helpful method for working with rectangles
     /// </summary>
-    public static class RectangleExtensions
+    public static class ClassExtensions
     {
         /// <summary>
         /// Calculates the signed depth of intersection between two rectangles.
@@ -47,6 +47,11 @@ namespace Lucky_Fighters
             float depthX = distanceX > 0 ? minDistanceX - distanceX : -minDistanceX - distanceX;
             float depthY = distanceY > 0 ? minDistanceY - distanceY : -minDistanceY - distanceY;
             return new Vector2(depthX, depthY);
+        }
+
+        public static float GetElapsedSeconds(this GameTime gameTime)
+        {
+            return (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
     }
 }
