@@ -17,8 +17,9 @@ namespace Lucky_Fighters
     {
         private float toWait;
         public TaskAction OnCompleted;
+        private LinkedList<Task> taskList;
 
-        public delegate void TaskAction(Task previousTask);
+        public delegate void TaskAction();
 
         public bool IsCompleted => toWait < 0f;
 
@@ -26,25 +27,44 @@ namespace Lucky_Fighters
         {
             toWait = delay;
             OnCompleted = action;
+            taskList = new LinkedList<Task>();
         }
 
-        public Task(Task previous, float delay, TaskAction action) : this(delay + previous.toWait, action) { }
+        public Task Then(float delay, TaskAction action)
+        {
+            taskList.AddLast(new Task(delay, action));
+            return this;
+        }
 
         public void Update(float elapsed)
         {
             toWait -= elapsed;
+        }
+
+        public void WhenCompleted()
+        {
+            OnCompleted();
+            LinkedListNode<Task> first = taskList.First;
+            if (first != null)
+            {
+                Task next = taskList.First.Value;
+                toWait += next.toWait;
+                OnCompleted = next.OnCompleted;
+                taskList.RemoveFirst();
+            }
         }
     }
 
     abstract class Player
     {
         // constants
-        const float MoveAcceleration = 6000f;
-        const float MaxMoveSpeed = 400f;
+        const float MoveAcceleration = 4000f;
+        const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
         const float Gravity = 2000f;
         const float JumpPower = 800f;
         const float JumpTolerance = .1f;
+        const float SprintingMultiplier = 1.5f;
 
         const float MaxHealth = 100f;
         const float AdditionalHealthRegen = 1f;
@@ -62,7 +82,7 @@ namespace Lucky_Fighters
         PlayerIndex playerIndex;
         int teamId;
         GamePadState oldGamePad;
-        Map Map;
+        protected Map Map;
 
         // combat and movement info
         public Vector2 Position;
@@ -102,6 +122,7 @@ namespace Lucky_Fighters
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
         public float DisabledTime;
+        public virtual bool CanMove => DisabledTime <= 0;
 
         List<Task> tasks;
 
@@ -227,11 +248,24 @@ namespace Lucky_Fighters
             AdditionalHealth -= additionalHealthDamage;
             Health -= damage - additionalHealthDamage;
 
+            Console.WriteLine("Took " + damage + " damage");
         }
 
+        /// <summary>
+        /// Get an adjusted rectangle for the given hitbox (the hitbox x = 0 is at the player's center x, y = 0 i at the feet)
+        /// </summary>
+        /// <param name="attackHitbox">The offsetted hitbox rectangle from the player</param>
+        /// <returns></returns>
         public Rectangle GetAdjustedAttackHitbox(Rectangle attackHitbox)
         {
             // TODO implement
+            int centerX = Rectangle.X;
+            Point startingPoint = new Point(centerX, Hitbox.Bottom);
+            if (flip == SpriteEffects.FlipHorizontally)
+            {
+                attackHitbox.X = - attackHitbox.X - attackHitbox.Width;
+            }
+            attackHitbox.Offset(startingPoint);
             return attackHitbox;
         }
 
@@ -292,39 +326,49 @@ namespace Lucky_Fighters
             if (IsOnGround)
             {
                 Velocity.Y = -JumpPower;
-
-                Console.WriteLine("Jumped");
             }
         }
 
         private void GetInput()
         {
-            GamePadState gamePad = GamePad.GetState(playerIndex);
-            movement = gamePad.ThumbSticks.Left.X;
 
-            // TODO check for attacks and other input
-            if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
-                gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
-            {
-                SendJump();
-            }
-            if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released)
-            {
-                Attack();
-            }
-            if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
-            {
-                // TODO add check for luck bar
-                SpecialAttack();
-            }
-            if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && oldGamePad.Buttons.RightShoulder == ButtonState.Released)
-            {
-                Dodge();
-            }
-            if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
-            {
-                Block();
-            }
+            GamePadState gamePad = GamePad.GetState(playerIndex);
+            if (CanMove)
+			{
+                movement = gamePad.ThumbSticks.Left.X;
+                if (Math.Abs(movement) < .1f)
+                    movement = 0f;
+
+                // TODO check for attacks and other input
+                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                {
+                    SendJump();
+                }
+                if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released)
+                {
+                    Attack();
+                }
+                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
+                {
+                    // TODO add check for luck bar
+                    SpecialAttack();
+                }
+                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+                {
+                    Dodge();
+                }
+                if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
+                {
+                    Block();
+                }
+                sprinting = gamePad.Triggers.Left >= TriggerTolerance;
+                ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
+			}
+            else
+			{
+                movement = 0f;
+			}
 
             oldGamePad = gamePad;
         }
@@ -345,14 +389,18 @@ namespace Lucky_Fighters
                     task.Update(elapsed);
                     if (task.IsCompleted)
                     {
-                        task.OnCompleted(task);
-                        tasks.RemoveAt(i);
-                        i--;
+                        task.WhenCompleted();
+                        // check again to make sure all Then() connected tasks are done
+                        if (task.IsCompleted)
+                        {
+                            tasks.RemoveAt(i);
+                            i--;
+                        }
                     }
                 }
             }
 
-            AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen);
+            AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
         }
 
         /// <summary>
@@ -371,8 +419,12 @@ namespace Lucky_Fighters
 
             // do the x velocity
             Velocity.X += movement * MoveAcceleration * elapsed;
-            Velocity.X *= 1 - DragFactor * elapsed;
-            Velocity.X = MathHelper.Clamp(Velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
+            if (movement == 0)
+                Velocity.X *= 1 - DragFactor * elapsed;
+            float maxSpeed = MaxMoveSpeed;
+            if (sprinting)
+                maxSpeed *= SprintingMultiplier;
+            Velocity.X = MathHelper.Clamp(Velocity.X, -maxSpeed, maxSpeed);
 
             Velocity.Y += Gravity * elapsed;
 
@@ -387,9 +439,9 @@ namespace Lucky_Fighters
             if (Position.Y == previousPosition.Y || IsOnGround)
                 Velocity.Y = 0;
 
-            if (Velocity.X < 0)
+            if (movement < 0)
                 flip = SpriteEffects.FlipHorizontally;
-            else if (Velocity.X > 0)
+            else if (movement > 0)
                 flip = SpriteEffects.None;
         }
 
