@@ -11,20 +11,19 @@ namespace Lucky_Fighters
 {
     class FighterSelection
     {
-        Color color1 = Color.Blue;
-        Color color2 = Color.Red;
-        Color color3 = Color.Yellow;
-        Color color4 = Color.Orange;
+        int timer;
+        Color[] defaultColors;
         Color[] alt;
         int numOfPlayers;
         Rectangle[] fighters;
         string[] fighterNames;
         Rectangle[] players;
+        Rectangle[] borders;
         Rectangle[] playerOneOptions;
         Rectangle[] playerTwoOptions;
         Rectangle[] playerThreeOptions;
         Rectangle[] playerFourOptions;
-        Rectangle[] hover;
+        Rectangle startStrip;
         int[] selections;
         string[] selectedFighters;
         bool[] ready;
@@ -39,6 +38,7 @@ namespace Lucky_Fighters
 
         public FighterSelection (IServiceProvider _serviceProvider, int sw, int sh, int nOfPlayers)
         {
+            timer = 0;
             numOfPlayers = nOfPlayers;
             selections = new int[numOfPlayers];
             gp = new GamePadState[numOfPlayers];
@@ -50,19 +50,27 @@ namespace Lucky_Fighters
             screenWidth = sw;
             screenHeight = sh;
             players = new Rectangle[numOfPlayers];
+            borders = new Rectangle[numOfPlayers];
             fighters = new Rectangle[5];
             playerOneOptions = new Rectangle[fighters.Length];
             playerTwoOptions = new Rectangle[fighters.Length]; 
             playerThreeOptions = new Rectangle[fighters.Length];
             playerFourOptions = new Rectangle[fighters.Length];
-            hover = new Rectangle[numOfPlayers];
             fighterNames = new string[] { "SwordFighter", "Archer", "Ninja", "Wizard", "Muscleman" };
             selectedFighters = new string[players.Length];
-            selectedFighters[0] = fighterNames[1];
+            ready = new bool[numOfPlayers];
+            defaultColors = new Color[4];
+            defaultColors[0] = Color.Blue;
+            defaultColors[1] = Color.Red;
+            defaultColors[2] = Color.Green;
+            defaultColors[3] = Color.Yellow;
+            startStrip = new Rectangle(0, 320, sw, 50);
             int playerCardSize = (sw - 50 * (4 + 1)) / 4;
             for (int x = 0; x < players.Length; x++)
             {
                 players[x] = new Rectangle(50 * (x + 1) + playerCardSize * x, sh - 50 - playerCardSize, playerCardSize, playerCardSize);
+                selectedFighters[x] = "Select Fighter";
+                borders[x] = new Rectangle(players[x].X - 10, players[x].Y - 10, players[x].Width + 20, players[x].Height + 20);
             }
             int fighterCardSize = (sw - 50 * (fighters.Length + 1)) / fighters.Length;
             for (int x = 0; x < fighters.Length; x++)
@@ -82,14 +90,31 @@ namespace Lucky_Fighters
             font = Content.Load<SpriteFont>("SpriteFont1");
         }
 
-        public void Update()
+        public void Update(GameTime gameTime)
         {
+            timer++;
             GetInput();
+            if (timer % 10  == 0)
+                Hover();
         }
 
-        public void GetInput()
+        private void Hover()
         {
-            //get player one input
+            for (int x = 0; x < ready.Length; x++)
+            {
+                if (!ready[x])
+                {
+                    if (alt[x] == defaultColors[x])
+                        alt[x] = Color.White;
+                    else
+                        alt[x] = defaultColors[x];
+                }
+            }
+        }
+
+        private void GetInput()
+        {
+            //get player input
             gp[0] = GamePad.GetState(PlayerIndex.One);
             gp[1] = GamePad.GetState(PlayerIndex.Two);
             if (numOfPlayers >= 3)
@@ -98,68 +123,135 @@ namespace Lucky_Fighters
                 gp[3] = GamePad.GetState(PlayerIndex.Four);
             for (int x = 0; x < numOfPlayers; x++)
             {
-                if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
+                if (!ready[x])
                 {
-                    selections[x]++;
-                    if (selections[x] >= fighters.Length)
-                        selections[x] = 0;
+                    //select by dpad
+                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
+                    {
+                        selections[x]++;
+                        if (selections[x] >= fighters.Length)
+                            selections[x] = 0;
+                    }
+                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
+                    {
+                        selections[x]--;
+                        if (selections[x] < 0)
+                            selections[x] = fighters.Length - 1;
+                    }
+
+                    //select by left thumbstick
+                    if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
+                    {
+                        selections[x]++;
+                        if (selections[x] >= fighters.Length)
+                            selections[x] = 0;
+                    }
+                    if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
+                    {
+                        selections[x]--;
+                        if (selections[x] < 0)
+                            selections[x] = fighters.Length - 1;
+                    }
+                    selectedFighters[x] = fighterNames[selections[x]];
+                    
+                    //declare that the player is ready
+                    if (gp[x].IsButtonDown(Buttons.A))
+                    {
+                        ready[x] = true;
+                    }
                 }
-                if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
+                //unready
+                if (gp[x].IsButtonDown(Buttons.B))
                 {
-                    selections[x]--;
-                    if (selections[x] < 0)
-                        selections[x] = fighters.Length - 1;
+                    ready[x] = false;
                 }
-                selectedFighters[x] = fighterNames[selections[x]];
-                
+
                 oldGP[x] = gp[x];
             }
         }
 
+        private bool ReadyToStart()
+        {
+            foreach (bool r in ready)
+            {
+                if (r == false)
+                    return false;
+            }
+            return true;
+        }
+
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            int y = 0;
-            foreach (Rectangle r in players)
+            for (int x = 0; x < players.Length; x++)
             {
-                y++;
-                spriteBatch.Draw(blank, r, Color.Red);
-                spriteBatch.DrawString(font, "Player " + y +"\n" + selectedFighters[y-1], new Vector2(r.X, r.Y), Color.White);
+                if (ready[x])
+                    spriteBatch.Draw(blank, borders[x], Color.White);
+                spriteBatch.Draw(blank, players[x], defaultColors[x]);
+                if (ready[x])
+                    spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x] + "\nReady", new Vector2(players[x].X + 10, players[x].Y + 10), Color.White);
+                else
+                    spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x], new Vector2(players[x].X + 10, players[x].Y + 10), Color.LightGray);
             }
             for (int x = 0; x < fighters.Length; x++)
             {
                 spriteBatch.Draw(blank, fighters[x], Color.White);
-                spriteBatch.DrawString(font, fighterNames[x], new Vector2(fighters[x].X, fighters[x].Y), Color.Red);
+                spriteBatch.DrawString(font, fighterNames[x], new Vector2(fighters[x].X + 10, fighters[x].Y + 10), Color.Red);
                 //only draw in colors if that fighter is selected
+
+                //player 1
                 if (selections[0] == x)
-                    spriteBatch.Draw(blank, playerOneOptions[x], color1);
+                {
+                    if (ready[0])
+                        spriteBatch.Draw(blank, playerOneOptions[x], defaultColors[0]);
+                    else
+                        spriteBatch.Draw(blank, playerOneOptions[x], alt[0]);
+                }
                 else
                     spriteBatch.Draw(blank, playerOneOptions[x], Color.White);
-                hover[0] = playerOneOptions[x];
-                spriteBatch.Draw(blank, hover[0], alt[0]);
-                
+
+                //player 2
                 if (selections[1] == x)
-                    spriteBatch.Draw(blank, playerTwoOptions[x], color2);
+                {
+                    if (ready[1])
+                        spriteBatch.Draw(blank, playerTwoOptions[x], defaultColors[1]);
+                    else
+                        spriteBatch.Draw(blank, playerTwoOptions[x], alt[1]);
+                }
                 else
                     spriteBatch.Draw(blank, playerTwoOptions[x], Color.White);
-                hover[1] = playerTwoOptions[x];
-                spriteBatch.Draw(blank, hover[1], alt[1]);
 
+                //player 3
                 if (numOfPlayers > 2)
                 {
                     if (selections[2] == x)
-                        spriteBatch.Draw(blank, playerThreeOptions[x], color3);
+                    {
+                        if (ready[2])
+                            spriteBatch.Draw(blank, playerThreeOptions[x], defaultColors[2]);
+                        else
+                            spriteBatch.Draw(blank, playerThreeOptions[x], alt[2]);
+                    }
                     else
-                        spriteBatch.Draw(blank, playerThreeOptions[x], Color.White);
-                    hover[2] = playerThreeOptions[x];
-                    spriteBatch.Draw(blank, hover[2], alt[2]);
+                        spriteBatch.Draw(blank, playerThreeOptions[x], Color.White);   
+                }
 
+                //player 4
+                if (numOfPlayers > 3)
+                {
                     if (selections[3] == x)
-                        spriteBatch.Draw(blank, playerFourOptions[x], color4);
+                    {
+                        if (ready[3])
+                            spriteBatch.Draw(blank, playerFourOptions[x], defaultColors[3]);
+                        else
+                            spriteBatch.Draw(blank, playerFourOptions[x], alt[3]);
+                    }
                     else
                         spriteBatch.Draw(blank, playerFourOptions[x], Color.White);
-                    hover[3] = playerFourOptions[x];
-                    spriteBatch.Draw(blank, hover[3], alt[3]);
                 }
+            }
+            if (ReadyToStart())
+            {
+                spriteBatch.Draw(blank, startStrip, Color.Orange);
+                spriteBatch.DrawString(font, "Press Start to begin.", new Vector2(startStrip.X + 10, startStrip.Y + 10), Color.White);
             }
         }
 

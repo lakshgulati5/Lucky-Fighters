@@ -81,8 +81,8 @@ namespace Lucky_Fighters
                 this.Exit();
 
             // TODO: Add your update logic here
-            map.Update(gameTime);
-            //fighterSelection.Update();
+            //map.Update(gameTime);
+            fighterSelection.Update(gameTime);
 
             base.Update(gameTime);
         }
