@@ -58,12 +58,12 @@ namespace Lucky_Fighters
     abstract class Player
     {
         // constants
-        const float MoveAcceleration = 4000f;
+        const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
         const float Gravity = 2000f;
         const float JumpPower = 800f;
-        const float JumpTolerance = .1f;
+        const float JumpTolerance = .2f;
         const float SprintingMultiplier = 1.5f;
 
         const float MaxHealth = 100f;
@@ -140,6 +140,7 @@ namespace Lucky_Fighters
 
         // for subclasses and rendering
         Texture2D spriteSheet;
+        protected Texture2D blank;
         /// <summary>
         /// The source rectangle, given the current frame index
         /// </summary>
@@ -180,6 +181,7 @@ namespace Lucky_Fighters
             this.framesPerRow = framesPerRow;
             frameIndex = 0;
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
+            blank = map.Content.Load<Texture2D>("blank");
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
@@ -252,7 +254,7 @@ namespace Lucky_Fighters
         }
 
         /// <summary>
-        /// Get an adjusted rectangle for the given hitbox (the hitbox x = 0 is at the player's center x, y = 0 i at the feet)
+        /// Get an adjusted rectangle for the given hitbox (the hitbox x = 0 is at the player's center x, y = 0 is at the feet)
         /// </summary>
         /// <param name="attackHitbox">The offsetted hitbox rectangle from the player</param>
         /// <returns></returns>
@@ -381,6 +383,8 @@ namespace Lucky_Fighters
             {
                 AttackCooldown = Math.Max(AttackCooldown - elapsed, 0f);
                 SpecialCooldown = Math.Max(SpecialCooldown - elapsed, 0f);
+                blockingCooldown = Math.Max(blockingCooldown - elapsed, 0f);
+                dodgingCooldown = Math.Max(dodgingCooldown - elapsed, 0f);
                 GetInput();
                 DoPhysics(elapsed);
                 for (int i = 0; i < tasks.Count; i++)
@@ -507,7 +511,7 @@ namespace Lucky_Fighters
             previousBottom = bounds.Bottom;
         }
 
-        public void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+        public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
             DrawHealthBar();
