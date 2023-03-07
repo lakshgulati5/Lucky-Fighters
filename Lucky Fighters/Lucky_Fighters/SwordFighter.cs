@@ -17,6 +17,8 @@ namespace Lucky_Fighters
         private const float BasicAttackCooldown = .3f;
         private const float BasicAttackDamage = 5f;
 
+        Rectangle attackRectangle;
+
         private const float SpecialAttackCooldown = 2f;
 
         private bool attacking;
@@ -26,6 +28,7 @@ namespace Lucky_Fighters
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
 		{
             attacking = false;
+            attackRectangle = new Rectangle();
 		}
 
         public override void Attack()
@@ -39,7 +42,7 @@ namespace Lucky_Fighters
             AddTask(new Task(.2f, () =>
             {
                 // TODO implement
-                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(30, -100, 30, 100));
+                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(30, -100, 80, 100));
                 Point center = attackHitbox.Center;
                 foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
 				{
@@ -48,8 +51,11 @@ namespace Lucky_Fighters
                         otherPlayer.TakeDamage(BasicAttackDamage);
 					}
 				}
-
+                attackRectangle = attackHitbox;
                 attacking = false;
+            }).Then(.3f, () =>
+            {
+                attackRectangle = new Rectangle();
             }));
 
             AttackCooldown = BasicAttackCooldown;
@@ -76,5 +82,11 @@ namespace Lucky_Fighters
 
             Console.WriteLine("Used Ultimate");
         }
+
+        public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+		{
+            spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
+            base.Draw(spriteBatch, gameTime);
+		}
     }
 }

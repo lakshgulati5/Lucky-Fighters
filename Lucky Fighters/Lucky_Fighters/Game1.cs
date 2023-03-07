@@ -80,9 +80,9 @@ namespace Lucky_Fighters
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            // TODO: Add your update logic here
-            //map.Update(gameTime);
-            fighterSelection.Update(gameTime);
+			// TODO: Add your update logic here
+			map.Update(gameTime);
+			//fighterSelection.Update(gameTime);
 
             base.Update(gameTime);
         }
