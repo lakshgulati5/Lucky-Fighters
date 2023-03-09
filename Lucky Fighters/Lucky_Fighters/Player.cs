@@ -12,50 +12,8 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-    // a task that needs to be completed after a delay
-    class Task
-    {
-        private float toWait;
-        public TaskAction OnCompleted;
-        private LinkedList<Task> taskList;
 
-        public delegate void TaskAction();
-
-        public bool IsCompleted => toWait < 0f;
-
-        public Task(float delay, TaskAction action)
-        {
-            toWait = delay;
-            OnCompleted = action;
-            taskList = new LinkedList<Task>();
-        }
-
-        public Task Then(float delay, TaskAction action)
-        {
-            taskList.AddLast(new Task(delay, action));
-            return this;
-        }
-
-        public void Update(float elapsed)
-        {
-            toWait -= elapsed;
-        }
-
-        public void WhenCompleted()
-        {
-            OnCompleted();
-            LinkedListNode<Task> first = taskList.First;
-            if (first != null)
-            {
-                Task next = taskList.First.Value;
-                toWait += next.toWait;
-                OnCompleted = next.OnCompleted;
-                taskList.RemoveFirst();
-            }
-        }
-    }
-
-    abstract class Player
+    abstract class Player : AnimatedSprite
     {
         // constants
         const float MoveAcceleration = 2000f;
@@ -142,50 +100,31 @@ namespace Lucky_Fighters
         Texture2D spriteSheet;
         protected Texture2D blank;
         /// <summary>
-        /// The source rectangle, given the current frame index
-        /// </summary>
-        Rectangle SourceRectangle
-        {
-            get
-            {
-                int x = frameIndex % framesPerRow, y = frameIndex / framesPerRow;
-                return new Rectangle(x * frameWidth, y * frameHeight, frameWidth, frameHeight);
-            }
-        }
-        /// <summary>
         /// The rectangle to be used for drawing
         /// </summary>
         Rectangle Rectangle
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, frameWidth, frameHeight);
+                return new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight);
             }
         }
-        Vector2 Origin
-        {
-            get => new Vector2(frameWidth, frameHeight) / 2;
-        }
         SpriteEffects flip;
-        int frameWidth;
-        int frameHeight;
-        int framesPerRow;
-        int frameIndex;
 
-        public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId)
+        public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId) : base(frameWidth, frameHeight, framesPerRow)
         {
             Map = map;
             this.weightMultiplier = weightMultiplier;
-            this.frameWidth = frameWidth;
-            this.frameHeight = frameHeight;
-            this.framesPerRow = framesPerRow;
-            frameIndex = 0;
+            
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             blank = map.Content.Load<Texture2D>("blank");
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
             tasks = new List<Task>();
+            
+            // add more to this list as more functionality is added
+            // fighter subclasses should implement the following animations: Idle, Running
 
             oldGamePad = GamePad.GetState(playerIndex);
             Reset(start);
@@ -331,6 +270,9 @@ namespace Lucky_Fighters
             }
         }
 
+        /// <summary>
+        /// Update player input variables to be used in physics calculation
+        /// </summary>
         private void GetInput()
         {
 
@@ -372,11 +314,26 @@ namespace Lucky_Fighters
                 movement = 0f;
 			}
 
+            // update the current animation to match player input
+            if (movement != 0)
+			{
+                if (currentAnim != "Running")
+				{
+                    SetAndPlayAnimation("Running");
+				}
+			}
+            else
+			{
+                PlayAnimationIfNotPlaying("Idle");
+			}
+
             oldGamePad = gamePad;
         }
 
-        public void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
+            base.Update(gameTime);
+
             float elapsed = gameTime.GetElapsedSeconds();
 
             if (!IsDead)
@@ -436,13 +393,14 @@ namespace Lucky_Fighters
 
             HandleCollisions();
 
-
+            // reset velocity if there is a collision
             if (Position.X == previousPosition.X)
                 Velocity.X = 0;
 
             if (Position.Y == previousPosition.Y || IsOnGround)
                 Velocity.Y = 0;
-
+            
+            // flip the sprite based on the direction the player is inputting
             if (movement < 0)
                 flip = SpriteEffects.FlipHorizontally;
             else if (movement > 0)
