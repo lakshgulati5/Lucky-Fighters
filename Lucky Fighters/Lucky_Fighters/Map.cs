@@ -129,7 +129,7 @@ namespace Lucky_Fighters
             {
                 // Blank space
                 case '.':
-                    return new Tile(String.Empty, 0, TileCollision.Passable);
+                    return new Tile(string.Empty, 0, TileCollision.Passable);
 
                 // blocks and platforms will have this format:
                 // e.g. platforms: q is [], w is [=, e is ==, r is =], where [ is a border and = is open
@@ -178,7 +178,7 @@ namespace Lucky_Fighters
             switch (fighters[(int)index])
             {
                 case "swordfighter":
-                    players[(int)index] = new SwordFighter(this, start, index, 0);
+                    players[(int)index] = new SwordFighter(this, start, index, (int)index);
                     break;
                     /*
                 case "archer":
@@ -196,7 +196,7 @@ namespace Lucky_Fighters
                 */
             }
 
-            return new Tile(String.Empty, 0, TileCollision.Passable);
+            return new Tile(string.Empty, 0, TileCollision.Passable);
         }
 
         private Tile LoadVarietyTile(string _tileSheetName, int index)
@@ -230,6 +230,19 @@ namespace Lucky_Fighters
             //    return new Rectangle(x * Tile.Width, (y * Tile.Height) + 20, Tile.Width, Tile.Height - 20);
             return new Rectangle(x * Tile.Width, (y * Tile.Height) + 5, Tile.Width, Tile.Height - 5);
         }
+
+        public List<Player> GetCollidingPlayers(Rectangle hitbox)
+		{
+            List<Player> touchingPlayers = new List<Player>();
+            foreach (Player player in players)
+			{
+                if (player.Hitbox.Intersects(hitbox))
+				{
+                    touchingPlayers.Add(player);
+				}
+			}
+            return touchingPlayers;
+		}
 
         public override void Update(GameTime _gameTime)
         {

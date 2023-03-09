@@ -106,6 +106,8 @@ namespace Lucky_Fighters
             // TODO: Add your drawing code here
             spriteBatch.Begin();
             screens[index].Draw(gameTime, spriteBatch);
+            map.Draw(gameTime, spriteBatch);
+            //fighterSelection.Draw(gameTime, spriteBatch);
             spriteBatch.End();
 
             base.Draw(gameTime);
