@@ -29,11 +29,12 @@ namespace Lucky_Fighters
 		{
             attacking = false;
             attackRectangle = new Rectangle();
-		}
+            SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 1 }, 3, true));
+            SpriteAnimations.Add("Running", new Animation(new int[] { 0, 1 }, 5, true));
+        }
 
         public override void Attack()
         {
-            // TODO implement
             if (AttackCooldown > 0f || attacking)
                 return;
 
@@ -41,8 +42,7 @@ namespace Lucky_Fighters
 
             AddTask(new Task(.2f, () =>
             {
-                // TODO implement
-                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(30, -100, 80, 100));
+                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 100));
                 Point center = attackHitbox.Center;
                 foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
 				{
