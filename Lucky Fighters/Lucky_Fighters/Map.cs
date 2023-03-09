@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-    class Map : IDisposable
+    class Map : Screen, IDisposable
     {
         private Tile[,] tiles;
         private Dictionary<string, Texture2D> tileSheets;
@@ -18,6 +18,7 @@ namespace Lucky_Fighters
         
         Player[] players;
         string[] fighters;
+        int[] lives;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -68,6 +69,11 @@ namespace Lucky_Fighters
                 TileSourceRecs.Add(i, rectTile);
             }
             LoadTiles(path);
+        }
+
+        public override void LoadContent()
+        {
+           
         }
 
         private void LoadTiles(string path)
@@ -238,7 +244,7 @@ namespace Lucky_Fighters
             return touchingPlayers;
 		}
 
-        public void Update(GameTime _gameTime)
+        public override void Update(GameTime _gameTime)
         {
             int x = 0;
             foreach (Player player in players)
@@ -255,7 +261,7 @@ namespace Lucky_Fighters
         {
             players[index].OnKilled();
         }
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             DrawTiles(spriteBatch);
             foreach (Player player in players)
@@ -286,6 +292,11 @@ namespace Lucky_Fighters
         public void Dispose()
         {
             Content.Unload();
+        }
+
+        public override bool ReadyForNextScreen()
+        {
+            return false;
         }
     }
 }

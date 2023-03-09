@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-    class FighterSelection
+    class FighterSelection : Screen
     {
         int timer;
         Color[] defaultColors;
@@ -33,6 +33,7 @@ namespace Lucky_Fighters
         SpriteFont font;
         GamePadState[] gp;
         GamePadState[] oldGP;
+        public bool started;
 
         public ContentManager Content { get; }
 
@@ -82,15 +83,16 @@ namespace Lucky_Fighters
                 playerThreeOptions[x] = new Rectangle(fighters[x].X + displacement * 2, fighters[x].Bottom - displacement, displacement, displacement);
                 playerFourOptions[x] = new Rectangle(fighters[x].X + displacement * 3, fighters[x].Bottom - displacement, displacement, displacement);
             }
+            started = false;
         }
 
-        public void LoadContent()
+        public override void LoadContent()
         {
             blank = Content.Load<Texture2D>("blank");
             font = Content.Load<SpriteFont>("SpriteFont1");
         }
 
-        public void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
             timer++;
             GetInput();
@@ -166,6 +168,12 @@ namespace Lucky_Fighters
                     ready[x] = false;
                 }
 
+                if (ReadyToStart())
+                {
+                    if (gp[0].IsButtonDown(Buttons.Start))
+                        started = true;
+                }
+
                 oldGP[x] = gp[x];
             }
         }
@@ -180,7 +188,7 @@ namespace Lucky_Fighters
             return true;
         }
 
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             for (int x = 0; x < players.Length; x++)
             {
@@ -255,5 +263,9 @@ namespace Lucky_Fighters
             }
         }
 
+        public override bool ReadyForNextScreen()
+        {
+            return started;
+        }
     }
 }
