@@ -9,15 +9,6 @@ namespace Lucky_Fighters
 {
     public abstract class Screen
     {
-        public enum typesOfScreens
-        {
-            home,
-            numOfPlayerSelection,
-            fighterSelection,
-            mapSelection,
-            gameplay,
-            results
-        }
         public abstract void LoadContent();
         public abstract void Update(GameTime gameTime);
         public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);

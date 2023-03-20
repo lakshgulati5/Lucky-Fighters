@@ -57,14 +57,10 @@ namespace Lucky_Fighters
             playerTwoOptions = new Rectangle[fighters.Length]; 
             playerThreeOptions = new Rectangle[fighters.Length];
             playerFourOptions = new Rectangle[fighters.Length];
-            fighterNames = new string[] { "SwordFighter", "Archer", "Ninja", "Wizard", "Muscleman" };
+            fighterNames = new string[] { "swordfighter", "archer", "ninja", "wizard", "muscleman" };
             selectedFighters = new string[players.Length];
             ready = new bool[numOfPlayers];
-            defaultColors = new Color[4];
-            defaultColors[0] = Color.Blue;
-            defaultColors[1] = Color.Red;
-            defaultColors[2] = Color.Green;
-            defaultColors[3] = Color.Yellow;
+            defaultColors = new Color[] { Color.Blue, Color.Red, Color.Green, Color.Yellow };
             startStrip = new Rectangle(0, 320, sw, 50);
             int playerCardSize = (sw - 50 * (4 + 1)) / 4;
             for (int x = 0; x < players.Length; x++)
@@ -266,6 +262,11 @@ namespace Lucky_Fighters
         public override bool ReadyForNextScreen()
         {
             return started;
+        }
+
+        public string[] SelectedFighters()
+        {
+            return selectedFighters;
         }
     }
 }
