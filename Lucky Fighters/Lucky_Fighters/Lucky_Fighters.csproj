@@ -71,6 +71,8 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnimatedSprite.cs" />
+    <Compile Include="Animation.cs" />
     <Compile Include="FighterSelection.cs" />
     <Compile Include="NumberOfPlayerSelection.cs" />
     <Compile Include="Player.cs" />
@@ -81,6 +83,7 @@
     <Compile Include="ClassExtensions.cs" />
     <Compile Include="Screen.cs" />
     <Compile Include="SwordFighter.cs" />
+    <Compile Include="Task.cs" />
     <Compile Include="Tile.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,11 @@ namespace Lucky_Fighters
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
+        public const int GameWidth = 1344;
+        public const int GameHeight = 768;
+
+        public static readonly Color[] DefaultColors = new Color[] { Color.Blue, Color.Red, Color.Green, Color.Yellow };
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -28,8 +33,8 @@ namespace Lucky_Fighters
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.PreferredBackBufferWidth = 1344;
-            graphics.PreferredBackBufferHeight = 768;
+            graphics.PreferredBackBufferWidth = GameWidth;
+            graphics.PreferredBackBufferHeight = GameHeight;
             // allows for 14x8 map
         }
 

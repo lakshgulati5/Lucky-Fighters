@@ -15,27 +15,44 @@ namespace Lucky_Fighters
     class SwordFighter : Player
     {
         private const float BasicAttackCooldown = .3f;
+        private const float BasicAttackDamage = 5f;
+
+        Rectangle attackRectangle;
+
         private const float SpecialAttackCooldown = 2f;
 
-        public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId) { }
+		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
+		{
+            attacking = false;
+            attackRectangle = new Rectangle();
+            SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 1 }, 3, true));
+            SpriteAnimations.Add("Running", new Animation(new int[] { 0, 1 }, 5, true));
+        }
 
         public override void Attack()
         {
-            // TODO implement
-            if (AttackCooldown > 0f)
+            if (AttackCooldown > 0f || attacking)
                 return;
 
-            float elapsed = 0f;
-            AddTask(new Task(.1f, task1 =>
-            {
-                // TODO implement
-                Rectangle attackHitbox;
-            }));
+            attacking = true;
 
-            if (elapsed >= .5f)
+            AddTask(new Task(.15f, () =>
             {
-                
-            }
+                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
+                Point center = attackHitbox.Center;
+                foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
+				{
+                    if (!IsPlayerFriendly(otherPlayer))
+					{
+                        otherPlayer.TakeDamage(BasicAttackDamage);
+					}
+				}
+                attackRectangle = attackHitbox;
+                attacking = false;
+            }).Then(.1f, () =>
+            {
+                attackRectangle = new Rectangle();
+            }));
 
             AttackCooldown = BasicAttackCooldown;
             Console.WriteLine("Used Attack");
@@ -61,5 +78,11 @@ namespace Lucky_Fighters
 
             Console.WriteLine("Used Ultimate");
         }
+
+        public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+		{
+            spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
+            base.Draw(spriteBatch, gameTime);
+		}
     }
 }
