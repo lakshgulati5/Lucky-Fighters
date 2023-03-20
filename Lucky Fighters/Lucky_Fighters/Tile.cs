@@ -31,6 +31,8 @@ namespace Lucky_Fighters
     }
     class Tile
     {
+        public static readonly Tile Empty = new Tile(string.Empty, 0, TileCollision.Passable);
+
         // name of the sprite sheet
         public string TileSheetName;
         // the index of the rectangle for sourceRect for drawing.

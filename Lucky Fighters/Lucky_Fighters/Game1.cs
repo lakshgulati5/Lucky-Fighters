@@ -16,6 +16,11 @@ namespace Lucky_Fighters
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
+        public const int GameWidth = 1344;
+        public const int GameHeight = 768;
+
+        public static readonly Color[] DefaultColors = new Color[] { Color.Blue, Color.Red, Color.Green, Color.Yellow };
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -26,8 +31,8 @@ namespace Lucky_Fighters
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.PreferredBackBufferWidth = 1344;
-            graphics.PreferredBackBufferHeight = 768;
+            graphics.PreferredBackBufferWidth = GameWidth;
+            graphics.PreferredBackBufferHeight = GameHeight;
             // allows for 14x8 map
         }
 
@@ -42,7 +47,7 @@ namespace Lucky_Fighters
             // TODO: Add your initialization logic here
 
             base.Initialize();
-            index = 0;
+            index = 1;
         }
 
         /// <summary>
@@ -57,7 +62,7 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             // test map
             FighterSelection fighterSelection = new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight, 2);
-            Map map = new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter" });
+            Map map = new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter", "swordfighter" });
             screens = new Screen[]
             {
                   fighterSelection,
@@ -106,7 +111,7 @@ namespace Lucky_Fighters
             // TODO: Add your drawing code here
             spriteBatch.Begin();
             screens[index].Draw(gameTime, spriteBatch);
-            map.Draw(gameTime, spriteBatch);
+            //map.Draw(gameTime, spriteBatch);
             //fighterSelection.Draw(gameTime, spriteBatch);
             spriteBatch.End();
 
