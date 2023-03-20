@@ -56,7 +56,7 @@ namespace Lucky_Fighters
             playerTwoOptions = new Rectangle[fighters.Length]; 
             playerThreeOptions = new Rectangle[fighters.Length];
             playerFourOptions = new Rectangle[fighters.Length];
-            fighterNames = new string[] { "SwordFighter", "Archer", "Ninja", "Wizard", "Muscleman" };
+            fighterNames = new string[] { "swordfighter", "archer", "ninja", "wizard", "muscleman" };
             selectedFighters = new string[players.Length];
             ready = new bool[numOfPlayers];
             startStrip = new Rectangle(0, 320, sw, 50);
@@ -260,6 +260,11 @@ namespace Lucky_Fighters
         public override bool ReadyForNextScreen()
         {
             return started;
+        }
+
+        public string[] SelectedFighters()
+        {
+            return selectedFighters;
         }
     }
 }

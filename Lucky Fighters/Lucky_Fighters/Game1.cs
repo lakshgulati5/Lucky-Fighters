@@ -24,8 +24,10 @@ namespace Lucky_Fighters
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        Screen[] screens;
-        int index;
+        Screen screen;
+        NumberOfPlayerSelection numberOfPlayerSelection;
+        FighterSelection fighterSelection;
+        Map map;
 
         public Game1()
         {
@@ -47,7 +49,6 @@ namespace Lucky_Fighters
             // TODO: Add your initialization logic here
 
             base.Initialize();
-            index = 1;
         }
 
         /// <summary>
@@ -60,15 +61,17 @@ namespace Lucky_Fighters
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
-            // test map
-            FighterSelection fighterSelection = new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight, 2);
-            Map map = new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter", "swordfighter" });
-            screens = new Screen[]
-            {
-                  fighterSelection,
-                  map
-            };
-            fighterSelection.LoadContent();
+            int sw = graphics.PreferredBackBufferWidth;
+            int sh = graphics.PreferredBackBufferHeight;
+            numberOfPlayerSelection = new NumberOfPlayerSelection(Services, sw, sh);
+            //fighterSelection = new FighterSelection(Services, sw, sh, 2);
+            SetScreen(numberOfPlayerSelection);
+        }
+
+        public void SetScreen (Screen screen)
+        {
+            this.screen = screen;
+            screen.LoadContent();
         }
 
         /// <summary>
@@ -93,9 +96,12 @@ namespace Lucky_Fighters
 
             // TODO: Add your update logic here
             //map.Update(gameTime);
-            screens[index].Update(gameTime);
-            if (screens[index].ReadyForNextScreen())
-                index++;
+            screen.Update(gameTime);
+            if (screen.ReadyForNextScreen() && screen == fighterSelection)
+            {
+                map = new Map(Services, @"Content\Maps\map1.txt", fighterSelection.SelectedFighters());
+                screen = map;
+            }
 
             base.Update(gameTime);
         }
@@ -110,9 +116,7 @@ namespace Lucky_Fighters
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
-            screens[index].Draw(gameTime, spriteBatch);
-            //map.Draw(gameTime, spriteBatch);
-            //fighterSelection.Draw(gameTime, spriteBatch);
+            screen.Draw(gameTime, spriteBatch);
             spriteBatch.End();
 
             base.Draw(gameTime);
