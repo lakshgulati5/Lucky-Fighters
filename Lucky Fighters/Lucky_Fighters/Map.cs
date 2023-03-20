@@ -129,7 +129,7 @@ namespace Lucky_Fighters
             {
                 // Blank space
                 case '.':
-                    return new Tile(string.Empty, 0, TileCollision.Passable);
+                    return Tile.Empty;
 
                 // blocks and platforms will have this format:
                 // e.g. platforms: q is [], w is [=, e is ==, r is =], where [ is a border and = is open
@@ -170,6 +170,8 @@ namespace Lucky_Fighters
         /// </summary>
         private Tile LoadStartTile(int _x, int _y, PlayerIndex index)
         {
+            if ((int)index >= fighters.Length)
+                return Tile.Empty;
             if (players[(int)index] != null)
                 throw new NotSupportedException("A level may only have one starting point");
 
@@ -196,7 +198,7 @@ namespace Lucky_Fighters
                 */
             }
 
-            return new Tile(string.Empty, 0, TileCollision.Passable);
+            return Tile.Empty;
         }
 
         private Tile LoadVarietyTile(string _tileSheetName, int index)

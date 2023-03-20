@@ -31,7 +31,7 @@ namespace Lucky_Fighters
         // therefore, cooldowns should be >= the duration
         const float DodgeDuration = .3f;
         const float DodgeCooldown = .8f;
-        const float BlockDuration = .5f;
+        const float BlockDuration = .3f;
         const float BlockCooldown = 1f;
         const float BlockDamageFactor = .5f;
         const float TriggerTolerance = .9f;
@@ -60,6 +60,7 @@ namespace Lucky_Fighters
         bool sprinting;
         bool ducking;
         float jumpingInput;
+        protected bool attacking;
 
         public float AttackCooldown { get; protected set; }
         public float SpecialCooldown { get; protected set; }
@@ -80,7 +81,7 @@ namespace Lucky_Fighters
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
         public float DisabledTime;
-        public virtual bool CanMove => DisabledTime <= 0;
+        public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0;
 
         List<Task> tasks;
 
@@ -284,12 +285,12 @@ namespace Lucky_Fighters
                     movement = 0f;
 
                 // TODO check for attacks and other input
-                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
                     gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
                 {
                     SendJump();
                 }
-                if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released)
+                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released)
                 {
                     Attack();
                 }
@@ -341,7 +342,9 @@ namespace Lucky_Fighters
                 AttackCooldown = Math.Max(AttackCooldown - elapsed, 0f);
                 SpecialCooldown = Math.Max(SpecialCooldown - elapsed, 0f);
                 blockingCooldown = Math.Max(blockingCooldown - elapsed, 0f);
+                blockingTime = Math.Max(blockingTime - elapsed, 0f);
                 dodgingCooldown = Math.Max(dodgingCooldown - elapsed, 0f);
+                dodgingTime = Math.Max(dodgingTime - elapsed, 0f);
                 GetInput();
                 DoPhysics(elapsed);
                 for (int i = 0; i < tasks.Count; i++)
@@ -359,9 +362,10 @@ namespace Lucky_Fighters
                         }
                     }
                 }
+
+                AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
             }
 
-            AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
         }
 
         /// <summary>
@@ -472,13 +476,44 @@ namespace Lucky_Fighters
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
-            DrawHealthBar();
+            DrawHealthBar(spriteBatch);
         }
 
-        public void DrawHealthBar()
+        public void DrawHealthBar(SpriteBatch spriteBatch)
         {
-            // TODO implement
+            int index = (int)playerIndex;
+            
+            int xMargin = Game1.GameWidth / 12;
+            int yMargin = 10;
+            int width = (Game1.GameWidth - xMargin * 5) / 4;
+            int height = Game1.GameHeight / 10;
+            // background of both health bars
+            Rectangle background = new Rectangle(xMargin + (xMargin + width) * index, Game1.GameHeight - height - yMargin, width, height);
+            
+            int xPadding = 20;
+            int yPadding = 5;
+            int barBackgroundWidth = background.Width - xPadding * 2;
+            int barBackgroundHeight = background.Height / 2 - yPadding * 3 / 2;
+            // background of each health bar, index 0 is the main hp bar (bottom)
+            Rectangle[] barBackgrounds = new Rectangle[]
+            {
+                new Rectangle(background.Left + xPadding, background.Bottom - yPadding - barBackgroundHeight, barBackgroundWidth, barBackgroundHeight),
+                new Rectangle(background.Left + xPadding, background.Top + yPadding, barBackgroundWidth, barBackgroundHeight)
+            };
 
+            // actual health bars
+            int barPadding = 4;
+            Rectangle healthBar = new Rectangle(barBackgrounds[0].Left + barPadding, barBackgrounds[0].Top + barPadding, (int)((barBackgroundWidth - barPadding * 2) * Health / MaxHealth), barBackgroundHeight - barPadding * 2);
+            Rectangle shieldBar = new Rectangle(barBackgrounds[1].Left + barPadding, barBackgrounds[1].Top + barPadding, (int)((barBackgroundWidth - barPadding * 2) * AdditionalHealth / MaxHealth), barBackgroundHeight - barPadding * 2);
+
+            // draw the bars
+            spriteBatch.Draw(blank, background, Game1.DefaultColors[index]);
+            foreach (Rectangle rect in barBackgrounds)
+			{
+                spriteBatch.Draw(blank, rect, new Color(.2f, .2f, .2f));
+			}
+            spriteBatch.Draw(blank, healthBar, Color.Lime);
+            spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
         }
     }
 }

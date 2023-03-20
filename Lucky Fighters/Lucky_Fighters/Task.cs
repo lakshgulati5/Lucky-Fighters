@@ -5,7 +5,12 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-    // a task that needs to be completed after a delay
+    /// <summary>
+    /// A task that needs to be completed after a delay<br/>
+    /// TaskAction is a function () => void<br/>
+    /// Usage: Player.AddTask(new Task(delay, () => { do stuff here }));<br />
+    /// Chain tasks with Task.Then()
+    /// </summary>
     class Task
     {
         private float toWait;
@@ -23,6 +28,7 @@ namespace Lucky_Fighters
             taskList = new LinkedList<Task>();
         }
 
+        // Run another task after this one is finished
         public Task Then(float delay, TaskAction action)
         {
             taskList.AddLast(new Task(delay, action));

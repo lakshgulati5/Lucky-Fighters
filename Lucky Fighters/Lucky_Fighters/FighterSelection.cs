@@ -12,7 +12,6 @@ namespace Lucky_Fighters
     class FighterSelection : Screen
     {
         int timer;
-        Color[] defaultColors;
         Color[] alt;
         int numOfPlayers;
         Rectangle[] fighters;
@@ -60,11 +59,6 @@ namespace Lucky_Fighters
             fighterNames = new string[] { "SwordFighter", "Archer", "Ninja", "Wizard", "Muscleman" };
             selectedFighters = new string[players.Length];
             ready = new bool[numOfPlayers];
-            defaultColors = new Color[4];
-            defaultColors[0] = Color.Blue;
-            defaultColors[1] = Color.Red;
-            defaultColors[2] = Color.Green;
-            defaultColors[3] = Color.Yellow;
             startStrip = new Rectangle(0, 320, sw, 50);
             int playerCardSize = (sw - 50 * (4 + 1)) / 4;
             for (int x = 0; x < players.Length; x++)
@@ -106,10 +100,10 @@ namespace Lucky_Fighters
             {
                 if (!ready[x])
                 {
-                    if (alt[x] == defaultColors[x])
+                    if (alt[x] == Game1.DefaultColors[x])
                         alt[x] = Color.White;
                     else
-                        alt[x] = defaultColors[x];
+                        alt[x] = Game1.DefaultColors[x];
                 }
             }
         }
@@ -182,7 +176,7 @@ namespace Lucky_Fighters
         {
             foreach (bool r in ready)
             {
-                if (r == false)
+                if (!r)
                     return false;
             }
             return true;
@@ -194,7 +188,7 @@ namespace Lucky_Fighters
             {
                 if (ready[x])
                     spriteBatch.Draw(blank, borders[x], Color.White);
-                spriteBatch.Draw(blank, players[x], defaultColors[x]);
+                spriteBatch.Draw(blank, players[x], Game1.DefaultColors[x]);
                 if (ready[x])
                     spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x] + "\nReady", new Vector2(players[x].X + 10, players[x].Y + 10), Color.White);
                 else
@@ -210,7 +204,7 @@ namespace Lucky_Fighters
                 if (selections[0] == x)
                 {
                     if (ready[0])
-                        spriteBatch.Draw(blank, playerOneOptions[x], defaultColors[0]);
+                        spriteBatch.Draw(blank, playerOneOptions[x], Game1.DefaultColors[0]);
                     else
                         spriteBatch.Draw(blank, playerOneOptions[x], alt[0]);
                 }
@@ -221,7 +215,7 @@ namespace Lucky_Fighters
                 if (selections[1] == x)
                 {
                     if (ready[1])
-                        spriteBatch.Draw(blank, playerTwoOptions[x], defaultColors[1]);
+                        spriteBatch.Draw(blank, playerTwoOptions[x], Game1.DefaultColors[1]);
                     else
                         spriteBatch.Draw(blank, playerTwoOptions[x], alt[1]);
                 }
@@ -234,7 +228,7 @@ namespace Lucky_Fighters
                     if (selections[2] == x)
                     {
                         if (ready[2])
-                            spriteBatch.Draw(blank, playerThreeOptions[x], defaultColors[2]);
+                            spriteBatch.Draw(blank, playerThreeOptions[x], Game1.DefaultColors[2]);
                         else
                             spriteBatch.Draw(blank, playerThreeOptions[x], alt[2]);
                     }
@@ -248,7 +242,7 @@ namespace Lucky_Fighters
                     if (selections[3] == x)
                     {
                         if (ready[3])
-                            spriteBatch.Draw(blank, playerFourOptions[x], defaultColors[3]);
+                            spriteBatch.Draw(blank, playerFourOptions[x], Game1.DefaultColors[3]);
                         else
                             spriteBatch.Draw(blank, playerFourOptions[x], alt[3]);
                     }

@@ -21,10 +21,6 @@ namespace Lucky_Fighters
 
         private const float SpecialAttackCooldown = 2f;
 
-        private bool attacking;
-
-		public override bool CanMove => !attacking && base.CanMove;
-
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
 		{
             attacking = false;
@@ -40,9 +36,9 @@ namespace Lucky_Fighters
 
             attacking = true;
 
-            AddTask(new Task(.2f, () =>
+            AddTask(new Task(.15f, () =>
             {
-                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 100));
+                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
                 Point center = attackHitbox.Center;
                 foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
 				{
@@ -53,7 +49,7 @@ namespace Lucky_Fighters
 				}
                 attackRectangle = attackHitbox;
                 attacking = false;
-            }).Then(.3f, () =>
+            }).Then(.1f, () =>
             {
                 attackRectangle = new Rectangle();
             }));
