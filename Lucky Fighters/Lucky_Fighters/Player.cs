@@ -92,7 +92,7 @@ namespace Lucky_Fighters
             {
                 // TODO implement
                 Rectangle rect = Rectangle;
-                int paddingX = 10, paddingY = 2;
+                int paddingX = 16, paddingY = 2;
                 return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY), rect.Width - paddingX * 2, rect.Height);
             }
         }
@@ -318,9 +318,15 @@ namespace Lucky_Fighters
             // update the current animation to match player input
             if (movement != 0)
 			{
-                if (currentAnim != "Running")
+                if (sprinting)
+                {
+                    if (currentAnim != "Sprinting")
+                        SetAndPlayAnimation("Sprinting");
+                }
+                else
 				{
-                    SetAndPlayAnimation("Running");
+                    if (currentAnim != "Running")
+                        SetAndPlayAnimation("Running");
 				}
 			}
             else
@@ -475,7 +481,7 @@ namespace Lucky_Fighters
 
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.White, 0f, Origin, flip, 0f);
+            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.Lerp(Color.White, Game1.DefaultColors[(int)playerIndex], .8f), 0f, Origin, flip, 0f);
             DrawHealthBar(spriteBatch);
         }
 

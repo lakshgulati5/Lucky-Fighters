@@ -25,8 +25,9 @@ namespace Lucky_Fighters
 		{
             attacking = false;
             attackRectangle = new Rectangle();
-            SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 1 }, 3, true));
-            SpriteAnimations.Add("Running", new Animation(new int[] { 0, 1 }, 5, true));
+            SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 5 }, 4, true));
+            SpriteAnimations.Add("Running", new Animation(new int[] { 1, 4, 3, 2 }, 14, true));
+            SpriteAnimations.Add("Sprinting", new Animation(new int[] { 1, 4, 3, 2 }, 18, true));
         }
 
         public override void Attack()
@@ -36,7 +37,7 @@ namespace Lucky_Fighters
 
             attacking = true;
 
-            AddTask(new Task(.15f, () =>
+            AddTask(new Task(.1f, () =>
             {
                 Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
                 Point center = attackHitbox.Center;

@@ -65,7 +65,9 @@ namespace Lucky_Fighters
             int sh = graphics.PreferredBackBufferHeight;
             numberOfPlayerSelection = new NumberOfPlayerSelection(Services, sw, sh);
             //fighterSelection = new FighterSelection(Services, sw, sh, 2);
-            SetScreen(numberOfPlayerSelection);
+            //SetScreen(numberOfPlayerSelection);
+            // testing
+            SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter" }));
         }
 
         public void SetScreen (Screen screen)
