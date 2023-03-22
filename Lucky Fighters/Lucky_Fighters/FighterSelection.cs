@@ -33,6 +33,7 @@ namespace Lucky_Fighters
         GamePadState[] gp;
         GamePadState[] oldGP;
         public bool started;
+        public Direction direction { get; private set; }
 
         public ContentManager Content { get; }
 
@@ -165,7 +166,15 @@ namespace Lucky_Fighters
                 if (ReadyToStart())
                 {
                     if (gp[0].IsButtonDown(Buttons.Start))
+                    {
+                        direction = Direction.Forward;
                         started = true;
+                    }
+                }
+                if (gp[0].Buttons.Back == ButtonState.Pressed)
+                {
+                    direction = Direction.Backward;
+                    started = true;
                 }
 
                 oldGP[x] = gp[x];

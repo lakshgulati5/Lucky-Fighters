@@ -25,9 +25,6 @@ namespace Lucky_Fighters
         SpriteBatch spriteBatch;
 
         Screen screen;
-        NumberOfPlayerSelection numberOfPlayerSelection;
-        FighterSelection fighterSelection;
-        Map map;
 
         public Game1()
         {
@@ -47,7 +44,6 @@ namespace Lucky_Fighters
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
@@ -63,9 +59,7 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             int sw = graphics.PreferredBackBufferWidth;
             int sh = graphics.PreferredBackBufferHeight;
-            numberOfPlayerSelection = new NumberOfPlayerSelection(Services, sw, sh);
-            //fighterSelection = new FighterSelection(Services, sw, sh, 2);
-            SetScreen(numberOfPlayerSelection);
+            SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
         }
 
         public void SetScreen (Screen screen)
@@ -91,16 +85,24 @@ namespace Lucky_Fighters
         protected override void Update(GameTime gameTime)
         {
             // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
+            //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+            //    this.Exit();
 
             // TODO: Add your update logic here
             //map.Update(gameTime);
             screen.Update(gameTime);
-            if (screen.ReadyForNextScreen() && screen == fighterSelection)
+            if (screen.ReadyForNextScreen() && screen is NumberOfPlayerSelection)
             {
-                map = new Map(Services, @"Content\Maps\map1.txt", fighterSelection.SelectedFighters());
-                screen = map;
+                NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
+                SetScreen(new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight, alt.Num));
+            }
+            if (screen.ReadyForNextScreen() && screen is FighterSelection)
+            {
+                FighterSelection alt = (FighterSelection)screen;
+                if (alt.direction == Screen.Direction.Forward)
+                    SetScreen(new Map(Services, @"Content\Maps\map1.txt", alt.SelectedFighters()));
+                else
+                    SetScreen(new NumberOfPlayerSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight));
             }
 
             base.Update(gameTime);
