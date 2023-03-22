@@ -59,7 +59,6 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             int sw = graphics.PreferredBackBufferWidth;
             int sh = graphics.PreferredBackBufferHeight;
-            numberOfPlayerSelection = new NumberOfPlayerSelection(Services, sw, sh);
             SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
         }
 
