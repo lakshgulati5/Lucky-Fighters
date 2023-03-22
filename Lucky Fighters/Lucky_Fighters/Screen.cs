@@ -9,6 +9,12 @@ namespace Lucky_Fighters
 {
     public abstract class Screen
     {
+        public enum Direction
+        {
+            Forward,
+            Backward
+        }
+
         public abstract void LoadContent();
         public abstract void Update(GameTime gameTime);
         public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);

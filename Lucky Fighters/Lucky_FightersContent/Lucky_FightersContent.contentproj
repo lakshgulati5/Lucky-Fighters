@@ -36,6 +36,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Big.spritefont">
+      <Name>Big</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+    </Compile>
     <None Include="Maps\map1.txt">
       <Name>map1</Name>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -63,6 +68,13 @@
   <ItemGroup>
     <Compile Include="Tiles\Blocks.png">
       <Name>Blocks</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="arrow.png">
+      <Name>arrow</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
