@@ -25,6 +25,7 @@ namespace Lucky_Fighters
         SpriteBatch spriteBatch;
 
         Screen screen;
+        int numOfPlayers;
 
         public Game1()
         {
@@ -94,7 +95,13 @@ namespace Lucky_Fighters
             if (screen.ReadyForNextScreen() && screen is NumberOfPlayerSelection)
             {
                 NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
-                SetScreen(new FighterSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight, alt.Num));
+                numOfPlayers = alt.Num;
+                SetScreen(new MapSelection(Services, GameWidth, GameHeight));
+            }
+            if (screen.ReadyForNextScreen() && screen is MapSelection)
+            {
+                MapSelection alt = (MapSelection)screen;
+                SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
             }
             if (screen.ReadyForNextScreen() && screen is FighterSelection)
             {
@@ -102,8 +109,9 @@ namespace Lucky_Fighters
                 if (alt.direction == Screen.Direction.Forward)
                     SetScreen(new Map(Services, @"Content\Maps\map1.txt", alt.SelectedFighters()));
                 else
-                    SetScreen(new NumberOfPlayerSelection(Services, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight));
+                    SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
             }
+
 
             base.Update(gameTime);
         }
@@ -114,7 +122,7 @@ namespace Lucky_Fighters
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(screen.GetColor());
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();

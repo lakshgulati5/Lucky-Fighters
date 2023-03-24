@@ -300,5 +300,10 @@ namespace Lucky_Fighters
         {
             return false;
         }
+
+        public override Color GetColor()
+        {
+            return Color.CornflowerBlue;
+        }
     }
 }

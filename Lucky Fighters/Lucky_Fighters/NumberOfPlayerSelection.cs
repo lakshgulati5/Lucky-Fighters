@@ -94,5 +94,10 @@ namespace Lucky_Fighters
             }
             oldGP = gp;
         }
+
+        public override Color GetColor()
+        {
+            return Color.DimGray;
+        }
     }
 }

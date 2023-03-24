@@ -275,5 +275,10 @@ namespace Lucky_Fighters
         {
             return selectedFighters;
         }
+
+        public override Color GetColor()
+        {
+            return Color.DimGray;
+        }
     }
 }
