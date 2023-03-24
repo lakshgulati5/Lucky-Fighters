@@ -28,6 +28,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 5 }, 4, true));
             SpriteAnimations.Add("Running", new Animation(new int[] { 1, 4, 3, 2 }, 14, true));
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 1, 4, 3, 2 }, 18, true));
+            SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
         }
 
         public override void Attack()

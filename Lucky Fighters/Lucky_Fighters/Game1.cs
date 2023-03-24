@@ -59,8 +59,10 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             int sw = graphics.PreferredBackBufferWidth;
             int sh = graphics.PreferredBackBufferHeight;
-            SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
-        }
+			SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
+            // testing
+			//SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter" }));
+		}
 
         public void SetScreen (Screen screen)
         {

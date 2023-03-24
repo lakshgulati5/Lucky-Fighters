@@ -50,14 +50,15 @@ namespace Lucky_Fighters
 			totalElapsed += elapsed;
 			if (totalElapsed >= secondsPerFrame)
 			{
-				frameIndex = (frameIndex + 1) % frames.Length;
-				totalElapsed -= secondsPerFrame;
-				if (!loop && frameIndex == 0)
+				if (!loop && frameIndex == frames.Length - 1)
 				{
 					IsPlaying = false;
 					if (callback != null)
 						callback();
+					return;
 				}
+				frameIndex = (frameIndex + 1) % frames.Length;
+				totalElapsed -= secondsPerFrame;
 			}
 		}
 	}

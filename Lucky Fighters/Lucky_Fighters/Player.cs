@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.GamerServices;
@@ -102,9 +102,8 @@ namespace Lucky_Fighters
             {
                 // TODO implement
                 Rectangle rect = Rectangle;
-                int paddingX = 16, paddingY = 2;
-                return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY),
-                    rect.Width - paddingX * 2, rect.Height);
+                int paddingX = 16, paddingY = 4;
+                return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY), rect.Width - paddingX * 2, rect.Height);
             }
         }
 
@@ -219,6 +218,7 @@ namespace Lucky_Fighters
             }
 
             attackHitbox.Offset(startingPoint);
+            Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
             return attackHitbox;
         }
 
@@ -279,6 +279,7 @@ namespace Lucky_Fighters
             if (IsOnGround)
             {
                 Velocity.Y = -JumpPower;
+                SetAndPlayAnimation("Jumping");
             }
         }
 
@@ -331,26 +332,29 @@ namespace Lucky_Fighters
                 movement = 0f;
             }
 
+            oldGamePad = gamePad;
+
+
+            // the following animations are overriden by jumping
+            if (currentAnim == "Jumping" && !IsOnGround)
+                return;
+
             // update the current animation to match player input
-            if (movement != 0)
+            if (movement == 0)
+			      {
+                PlayAnimationIfNotPlaying("Idle");
+                return;
+			      }
+            if (sprinting)
             {
-                if (sprinting)
-                {
-                    if (currentAnim != "Sprinting")
-                        SetAndPlayAnimation("Sprinting");
-                }
-                else
-                {
-                    if (currentAnim != "Running")
-                        SetAndPlayAnimation("Running");
-                }
+                if (currentAnim != "Sprinting")
+                    SetAndPlayAnimation("Sprinting");
             }
             else
-            {
-                PlayAnimationIfNotPlaying("Idle");
-            }
-
-            oldGamePad = gamePad;
+			      {
+                if (currentAnim != "Running")
+                    SetAndPlayAnimation("Running");
+			      }
         }
 
         public override void Update(GameTime gameTime)
