@@ -92,7 +92,7 @@ namespace Lucky_Fighters
             {
                 // TODO implement
                 Rectangle rect = Rectangle;
-                int paddingX = 16, paddingY = 2;
+                int paddingX = 16, paddingY = 4;
                 return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY), rect.Width - paddingX * 2, rect.Height);
             }
         }
@@ -208,6 +208,7 @@ namespace Lucky_Fighters
                 attackHitbox.X = - attackHitbox.X - attackHitbox.Width;
             }
             attackHitbox.Offset(startingPoint);
+            Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
             return attackHitbox;
         }
 
@@ -268,6 +269,7 @@ namespace Lucky_Fighters
             if (IsOnGround)
             {
                 Velocity.Y = -JumpPower;
+                SetAndPlayAnimation("Jumping");
             }
         }
 
@@ -315,26 +317,29 @@ namespace Lucky_Fighters
                 movement = 0f;
 			}
 
+            oldGamePad = gamePad;
+
+
+            // the following animations are overriden by jumping
+            if (currentAnim == "Jumping" && !IsOnGround)
+                return;
+
             // update the current animation to match player input
-            if (movement != 0)
-			{
-                if (sprinting)
-                {
-                    if (currentAnim != "Sprinting")
-                        SetAndPlayAnimation("Sprinting");
-                }
-                else
-				{
-                    if (currentAnim != "Running")
-                        SetAndPlayAnimation("Running");
-				}
-			}
-            else
+            if (movement == 0)
 			{
                 PlayAnimationIfNotPlaying("Idle");
+                return;
 			}
-
-            oldGamePad = gamePad;
+            if (sprinting)
+            {
+                if (currentAnim != "Sprinting")
+                    SetAndPlayAnimation("Sprinting");
+            }
+            else
+			{
+                if (currentAnim != "Running")
+                    SetAndPlayAnimation("Running");
+			}
         }
 
         public override void Update(GameTime gameTime)
