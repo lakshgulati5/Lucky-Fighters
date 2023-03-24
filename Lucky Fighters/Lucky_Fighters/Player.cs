@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.GamerServices;
@@ -12,7 +12,6 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-
     abstract class Player : AnimatedSprite
     {
         // constants
@@ -45,18 +44,28 @@ namespace Lucky_Fighters
         // combat and movement info
         public Vector2 Position;
         public Vector2 Velocity;
+
         float movement;
-        // TODO implement
+
+        /// <summary>
+        /// Affects X and Y acceleration and deceleration by acting as a coefficient for <see cref="MoveAcceleration"/> and a divisor for <see cref="Gravity"/> respectively.
+        /// <remarks>
+        /// The higher the number, the lighter the character is.
+        /// </remarks>
+        /// </summary>
         float weightMultiplier;
+
         public float Health { get; private set; }
         public float AdditionalHealth { get; private set; }
+
         public bool IsDead
         {
             get => Health <= 0;
         }
+
         public bool IsCompletelyDead { get; private set; }
         public float Luck { get; private set; }
-        
+
         bool sprinting;
         bool ducking;
         float jumpingInput;
@@ -64,12 +73,12 @@ namespace Lucky_Fighters
 
         public float AttackCooldown { get; protected set; }
         public float SpecialCooldown { get; protected set; }
-        
+
         bool IsDodging => dodgingTime > 0;
-        
+
         float dodgingTime;
         float dodgingCooldown;
-        
+
         bool IsBlocking => blockingTime > 0;
         float blockingTime;
         float blockingCooldown;
@@ -81,6 +90,7 @@ namespace Lucky_Fighters
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
         public float DisabledTime;
+
         public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0;
 
         List<Task> tasks;
@@ -100,30 +110,30 @@ namespace Lucky_Fighters
         // for subclasses and rendering
         Texture2D spriteSheet;
         protected Texture2D blank;
+
         /// <summary>
         /// The rectangle to be used for drawing
         /// </summary>
         Rectangle Rectangle
         {
-            get
-            {
-                return new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight);
-            }
+            get { return new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight); }
         }
+
         SpriteEffects flip;
 
-        public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow, string spriteSheetName, PlayerIndex playerIndex, int teamId) : base(frameWidth, frameHeight, framesPerRow)
+        public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow,
+            string spriteSheetName, PlayerIndex playerIndex, int teamId) : base(frameWidth, frameHeight, framesPerRow)
         {
             Map = map;
             this.weightMultiplier = weightMultiplier;
-            
+
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             blank = map.Content.Load<Texture2D>("blank");
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
             tasks = new List<Task>();
-            
+
             // add more to this list as more functionality is added
             // fighter subclasses should implement the following animations: Idle, Running
 
@@ -144,7 +154,6 @@ namespace Lucky_Fighters
         public void OnKilled()
         {
             // TODO implement
-            
         }
 
         public void Reset(Vector2 start)
@@ -205,8 +214,9 @@ namespace Lucky_Fighters
             Point startingPoint = new Point(centerX, Hitbox.Bottom);
             if (flip == SpriteEffects.FlipHorizontally)
             {
-                attackHitbox.X = - attackHitbox.X - attackHitbox.Width;
+                attackHitbox.X = -attackHitbox.X - attackHitbox.Width;
             }
+
             attackHitbox.Offset(startingPoint);
             Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
             return attackHitbox;
@@ -216,7 +226,7 @@ namespace Lucky_Fighters
         /// Make the player attack
         /// </summary>
         public abstract void Attack();
-        
+
         /// <summary>
         /// Make the player use a special attack
         /// </summary>
@@ -278,10 +288,9 @@ namespace Lucky_Fighters
         /// </summary>
         private void GetInput()
         {
-
             GamePadState gamePad = GamePad.GetState(playerIndex);
             if (CanMove)
-			{
+            {
                 movement = gamePad.ThumbSticks.Left.X;
                 if (Math.Abs(movement) < .1f)
                     movement = 0f;
@@ -292,30 +301,36 @@ namespace Lucky_Fighters
                 {
                     SendJump();
                 }
+
                 if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released)
                 {
                     Attack();
                 }
+
                 if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
                 {
                     // TODO add check for luck bar
                     SpecialAttack();
                 }
-                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+
+                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                    oldGamePad.Buttons.RightShoulder == ButtonState.Released)
                 {
                     Dodge();
                 }
+
                 if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
                 {
                     Block();
                 }
+
                 sprinting = gamePad.Triggers.Left >= TriggerTolerance;
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
-			}
+            }
             else
-			{
+            {
                 movement = 0f;
-			}
+            }
 
             oldGamePad = gamePad;
 
@@ -326,20 +341,20 @@ namespace Lucky_Fighters
 
             // update the current animation to match player input
             if (movement == 0)
-			{
+			      {
                 PlayAnimationIfNotPlaying("Idle");
                 return;
-			}
+			      }
             if (sprinting)
             {
                 if (currentAnim != "Sprinting")
                     SetAndPlayAnimation("Sprinting");
             }
             else
-			{
+			      {
                 if (currentAnim != "Running")
                     SetAndPlayAnimation("Running");
-			}
+			      }
         }
 
         public override void Update(GameTime gameTime)
@@ -376,7 +391,6 @@ namespace Lucky_Fighters
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
             }
-
         }
 
         /// <summary>
@@ -391,18 +405,19 @@ namespace Lucky_Fighters
             {
                 DoJump();
             }
+
             jumpingInput -= elapsed;
 
             // do the x velocity
-            Velocity.X += movement * MoveAcceleration * elapsed;
+            Velocity.X += movement * (MoveAcceleration * weightMultiplier) * elapsed;
             if (movement == 0)
-                Velocity.X *= 1 - DragFactor * elapsed;
+                Velocity.X *= 1 - DragFactor * elapsed * weightMultiplier;
             float maxSpeed = MaxMoveSpeed;
             if (sprinting)
                 maxSpeed *= SprintingMultiplier;
             Velocity.X = MathHelper.Clamp(Velocity.X, -maxSpeed, maxSpeed);
 
-            Velocity.Y += Gravity * elapsed;
+            Velocity.Y += (Gravity / weightMultiplier) * elapsed;
 
             Position += Velocity * elapsed;
 
@@ -414,7 +429,7 @@ namespace Lucky_Fighters
 
             if (Position.Y == previousPosition.Y || IsOnGround)
                 Velocity.Y = 0;
-            
+
             // flip the sprite based on the direction the player is inputting
             if (movement < 0)
                 flip = SpriteEffects.FlipHorizontally;
@@ -486,21 +501,23 @@ namespace Lucky_Fighters
 
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, Color.Lerp(Color.White, Game1.DefaultColors[(int)playerIndex], .8f), 0f, Origin, flip, 0f);
+            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle,
+                Color.Lerp(Color.White, Game1.DefaultColors[(int)playerIndex], .8f), 0f, Origin, flip, 0f);
             DrawHealthBar(spriteBatch);
         }
 
         public void DrawHealthBar(SpriteBatch spriteBatch)
         {
             int index = (int)playerIndex;
-            
+
             int xMargin = Game1.GameWidth / 12;
             int yMargin = 10;
             int width = (Game1.GameWidth - xMargin * 5) / 4;
             int height = Game1.GameHeight / 10;
             // background of both health bars
-            Rectangle background = new Rectangle(xMargin + (xMargin + width) * index, Game1.GameHeight - height - yMargin, width, height);
-            
+            Rectangle background = new Rectangle(xMargin + (xMargin + width) * index,
+                Game1.GameHeight - height - yMargin, width, height);
+
             int xPadding = 20;
             int yPadding = 5;
             int barBackgroundWidth = background.Width - xPadding * 2;
@@ -508,21 +525,28 @@ namespace Lucky_Fighters
             // background of each health bar, index 0 is the main hp bar (bottom)
             Rectangle[] barBackgrounds = new Rectangle[]
             {
-                new Rectangle(background.Left + xPadding, background.Bottom - yPadding - barBackgroundHeight, barBackgroundWidth, barBackgroundHeight),
-                new Rectangle(background.Left + xPadding, background.Top + yPadding, barBackgroundWidth, barBackgroundHeight)
+                new Rectangle(background.Left + xPadding, background.Bottom - yPadding - barBackgroundHeight,
+                    barBackgroundWidth, barBackgroundHeight),
+                new Rectangle(background.Left + xPadding, background.Top + yPadding, barBackgroundWidth,
+                    barBackgroundHeight)
             };
 
             // actual health bars
             int barPadding = 4;
-            Rectangle healthBar = new Rectangle(barBackgrounds[0].Left + barPadding, barBackgrounds[0].Top + barPadding, (int)((barBackgroundWidth - barPadding * 2) * Health / MaxHealth), barBackgroundHeight - barPadding * 2);
-            Rectangle shieldBar = new Rectangle(barBackgrounds[1].Left + barPadding, barBackgrounds[1].Top + barPadding, (int)((barBackgroundWidth - barPadding * 2) * AdditionalHealth / MaxHealth), barBackgroundHeight - barPadding * 2);
+            Rectangle healthBar = new Rectangle(barBackgrounds[0].Left + barPadding, barBackgrounds[0].Top + barPadding,
+                (int)((barBackgroundWidth - barPadding * 2) * Health / MaxHealth),
+                barBackgroundHeight - barPadding * 2);
+            Rectangle shieldBar = new Rectangle(barBackgrounds[1].Left + barPadding, barBackgrounds[1].Top + barPadding,
+                (int)((barBackgroundWidth - barPadding * 2) * AdditionalHealth / MaxHealth),
+                barBackgroundHeight - barPadding * 2);
 
             // draw the bars
             spriteBatch.Draw(blank, background, Game1.DefaultColors[index]);
             foreach (Rectangle rect in barBackgrounds)
-			{
+            {
                 spriteBatch.Draw(blank, rect, new Color(.2f, .2f, .2f));
-			}
+            }
+
             spriteBatch.Draw(blank, healthBar, Color.Lime);
             spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
         }
