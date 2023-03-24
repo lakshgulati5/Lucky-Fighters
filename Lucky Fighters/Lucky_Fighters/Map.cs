@@ -56,7 +56,7 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
-
+            lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
             for (int i = 0; i < TilesPerRow * NumRowsPerSheet; i++)
@@ -181,6 +181,7 @@ namespace Lucky_Fighters
             {
                 case "swordfighter":
                     players[(int)index] = new SwordFighter(this, start, index, (int)index);
+                    
                     break;
                     /*
                 case "archer":
@@ -197,6 +198,7 @@ namespace Lucky_Fighters
                     break;
                 */
             }
+            lives[(int)index] = 3;
 
             return Tile.Empty;
         }
@@ -252,8 +254,9 @@ namespace Lucky_Fighters
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
-                if (player.IsCompletelyDead)
-                    player.Reset(starts[x]);
+                if (player.IsCompletelyDead) player.Reset(starts[x]);
+                if (player.IsDead) OnPlayerKilled(x);
+
                 x++;
             }
         }
@@ -262,6 +265,10 @@ namespace Lucky_Fighters
         public void OnPlayerKilled(int index)
         {
             players[index].OnKilled();
+            lives[index] -= 1;
+
+            players[index].Reset(new Vector2(0,0));
+            
         }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {

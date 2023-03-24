@@ -83,6 +83,8 @@ namespace Lucky_Fighters
         float blockingTime;
         float blockingCooldown;
 
+        
+
         public bool IsOnGround { get; private set; }
         float previousBottom;
 
@@ -132,6 +134,8 @@ namespace Lucky_Fighters
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
+           
+
             tasks = new List<Task>();
 
             // add more to this list as more functionality is added
@@ -153,7 +157,7 @@ namespace Lucky_Fighters
 
         public void OnKilled()
         {
-            // TODO implement
+            
         }
 
         public void Reset(Vector2 start)
