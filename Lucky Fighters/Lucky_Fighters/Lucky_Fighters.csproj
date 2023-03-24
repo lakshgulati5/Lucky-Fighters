@@ -74,6 +74,7 @@
     <Compile Include="AnimatedSprite.cs" />
     <Compile Include="Animation.cs" />
     <Compile Include="FighterSelection.cs" />
+    <Compile Include="MapSelection.cs" />
     <Compile Include="NumberOfPlayerSelection.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Map.cs" />
