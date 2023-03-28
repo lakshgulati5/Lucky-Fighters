@@ -64,6 +64,7 @@ namespace Lucky_Fighters
         }
 
         public bool IsCompletelyDead { get; private set; }
+        public bool StartedRespawning { get; private set; }
         public float Luck { get; private set; }
 
         bool sprinting;
@@ -157,7 +158,8 @@ namespace Lucky_Fighters
 
         public void OnKilled()
         {
-            
+            StartedRespawning = true;
+            AddTask(new Task(2, () => IsCompletelyDead = true));
         }
 
         public void Reset(Vector2 start)
@@ -222,7 +224,7 @@ namespace Lucky_Fighters
             }
 
             attackHitbox.Offset(startingPoint);
-            Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
+            //Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
             return attackHitbox;
         }
 
@@ -338,6 +340,9 @@ namespace Lucky_Fighters
 
             oldGamePad = gamePad;
 
+            // the following animations are overriden by attacking
+            if (currentAnim == "Attacking" && SpriteAnimations[currentAnim].IsPlaying)
+                return;
 
             // the following animations are overriden by jumping
             if (currentAnim == "Jumping" && !IsOnGround)
@@ -345,10 +350,10 @@ namespace Lucky_Fighters
 
             // update the current animation to match player input
             if (movement == 0)
-			      {
+            {
                 PlayAnimationIfNotPlaying("Idle");
                 return;
-			      }
+			}
             if (sprinting)
             {
                 if (currentAnim != "Sprinting")
@@ -377,23 +382,23 @@ namespace Lucky_Fighters
                 dodgingTime = Math.Max(dodgingTime - elapsed, 0f);
                 GetInput();
                 DoPhysics(elapsed);
-                for (int i = 0; i < tasks.Count; i++)
-                {
-                    Task task = tasks[i];
-                    task.Update(elapsed);
-                    if (task.IsCompleted)
-                    {
-                        task.WhenCompleted();
-                        // check again to make sure all Then() connected tasks are done
-                        if (task.IsCompleted)
-                        {
-                            tasks.RemoveAt(i);
-                            i--;
-                        }
-                    }
-                }
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
+            }
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                Task task = tasks[i];
+                task.Update(elapsed);
+                if (task.IsCompleted)
+                {
+                    task.WhenCompleted();
+                    // check again to make sure all Then() connected tasks are done
+                    if (task.IsCompleted)
+                    {
+                        tasks.RemoveAt(i);
+                        i--;
+                    }
+                }
             }
         }
 
