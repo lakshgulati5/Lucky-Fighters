@@ -29,6 +29,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Running", new Animation(new int[] { 1, 4, 3, 2 }, 14, true));
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 1, 4, 3, 2 }, 18, true));
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
+            SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 12, 11, 13, 13 }, 30, false));
         }
 
         public override void Attack()
@@ -37,6 +38,7 @@ namespace Lucky_Fighters
                 return;
 
             attacking = true;
+            SetAndPlayAnimation("Attacking");
 
             AddTask(new Task(.1f, () =>
             {
@@ -83,8 +85,8 @@ namespace Lucky_Fighters
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
 		{
-            spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
             base.Draw(spriteBatch, gameTime);
+            //spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
 		}
     }
 }

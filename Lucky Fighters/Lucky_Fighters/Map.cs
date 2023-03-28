@@ -264,11 +264,12 @@ namespace Lucky_Fighters
 
         public void OnPlayerKilled(int index)
         {
-            players[index].OnKilled();
-            lives[index] -= 1;
+            Player player = players[index];
+            if (player.StartedRespawning)
+                return;
 
-            players[index].Reset(new Vector2(0,0));
-            
+            player.OnKilled();
+            lives[index] -= 1;
         }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
