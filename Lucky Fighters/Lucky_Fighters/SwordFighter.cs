@@ -14,7 +14,8 @@ namespace Lucky_Fighters
 {
     class SwordFighter : Player
     {
-        private const float BasicAttackCooldown = .3f;
+        private const float BasicAttackCooldown = .25f;
+        private const float BasicAttackForeswing = .15f;
         private const float BasicAttackDamage = 5f;
 
         Rectangle attackRectangle;
@@ -41,7 +42,7 @@ namespace Lucky_Fighters
             attacking = true;
             SetAndPlayAnimation("Attacking");
 
-            AddTask(new Task(.1f, () =>
+            AddTask(new Task(BasicAttackForeswing, () =>
             {
                 Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
                 Point center = attackHitbox.Center;
@@ -49,15 +50,17 @@ namespace Lucky_Fighters
 				{
                     if (!IsPlayerFriendly(otherPlayer))
 					{
-                        otherPlayer.TakeDamage(BasicAttackDamage);
+                        OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
 					}
 				}
                 attackRectangle = attackHitbox;
                 attacking = false;
-            }).Then(.1f, () =>
-            {
-                attackRectangle = new Rectangle();
-            }));
+            })
+			//.Then(.1f, () =>
+			//{
+			//	attackRectangle = new Rectangle();
+			//})
+			);
 
             AttackCooldown = BasicAttackCooldown;
             Console.WriteLine("Used Attack");
@@ -78,7 +81,7 @@ namespace Lucky_Fighters
         public override void Ultimate()
         {
             // TODO implement
-            if (Luck < 1f)
+            if (Luck < 100f)
                 return;
 
             Console.WriteLine("Used Ultimate");

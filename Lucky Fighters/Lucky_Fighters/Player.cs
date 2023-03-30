@@ -33,7 +33,10 @@ namespace Lucky_Fighters
         const float BlockDuration = .3f;
         const float BlockCooldown = 1f;
         const float BlockDamageFactor = .5f;
-        const float TriggerTolerance = .9f;
+        const float DamageDisableDuration = .15f;
+        const float LuckPerDamageTaken = .4f;
+        const float LuckPerDamageDealt = .8f;
+        const float TriggerTolerance = .7f;
 
         // player identifiers
         PlayerIndex playerIndex;
@@ -58,10 +61,7 @@ namespace Lucky_Fighters
         public float Health { get; private set; }
         public float AdditionalHealth { get; private set; }
 
-        public bool IsDead
-        {
-            get => Health <= 0;
-        }
+        public bool IsDead => Health <= 0;
 
         public bool IsCompletelyDead { get; private set; }
         public bool StartedRespawning { get; private set; }
@@ -186,26 +186,38 @@ namespace Lucky_Fighters
         /// <summary>
         /// Called when this player is hit by an enemy player's attack
         /// </summary>
-        /// <param name="damage">Ranges from 0 to 1</param>
-        public void TakeDamage(float damage)
+        /// <param name="damage">Ranges from 0 to 100</param>
+        /// <returns>Final damage taken</returns>
+        public float TakeDamage(float damage)
         {
             if (damage == 0)
-                return;
+                return 0f;
 
             if (IsDodging)
-                return;
+				return 0f;
 
-            if (IsBlocking)
-            {
-                damage *= BlockDamageFactor;
-            }
+			if (IsBlocking)
+			{
+				damage *= BlockDamageFactor;
+				blockingTime = 0;
+			}
+            else
+			{
+                // if not blocking, disable the player for a brief duration
+			    DisabledTime = DamageDisableDuration;
+			}
 
             // damage to deal to the second health bar
             float additionalHealthDamage = Math.Min(damage, AdditionalHealth);
             AdditionalHealth -= additionalHealthDamage;
             Health -= damage - additionalHealthDamage;
+            // Player receives some luck from taking damage
+            IncrementLuck(damage * LuckPerDamageTaken);
 
             Console.WriteLine("Took " + damage + " damage");
+
+
+            return damage;
         }
 
         /// <summary>
@@ -215,7 +227,6 @@ namespace Lucky_Fighters
         /// <returns></returns>
         public Rectangle GetAdjustedAttackHitbox(Rectangle attackHitbox)
         {
-            // TODO implement
             int centerX = Rectangle.X;
             Point startingPoint = new Point(centerX, Hitbox.Bottom);
             if (flip == SpriteEffects.FlipHorizontally)
@@ -227,6 +238,24 @@ namespace Lucky_Fighters
             //Console.WriteLine(Hitbox + " " + attackHitbox + " " + Rectangle + " " + Origin);
             return attackHitbox;
         }
+
+        /// <summary>
+        /// Called when this player deals damage to other players
+        /// </summary>
+        /// <param name="damageDealt">Amount of damage dealt to other players</param>
+        public void OnDamageDealt(float damageDealt)
+        {
+            IncrementLuck(damageDealt * LuckPerDamageDealt);
+        }
+
+        /// <summary>
+        /// Adds luck to the luck bar (capped at 100f)
+        /// </summary>
+        /// <param name="additionalLuck">Luck added to the luck bar</param>
+        private void IncrementLuck(float additionalLuck)
+		{
+            Luck = Math.Min(Luck + additionalLuck, 100f);
+		}
 
         /// <summary>
         /// Make the player attack
@@ -376,6 +405,7 @@ namespace Lucky_Fighters
             base.Update(gameTime);
 
             float elapsed = gameTime.GetElapsedSeconds();
+            DisabledTime = Math.Max(DisabledTime - elapsed, 0f);
 
             if (!IsDead)
             {
