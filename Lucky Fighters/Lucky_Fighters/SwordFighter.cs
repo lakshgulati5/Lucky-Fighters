@@ -14,14 +14,15 @@ namespace Lucky_Fighters
 {
     class SwordFighter : Player
     {
-        private const float BasicAttackCooldown = .3f;
+        private const float BasicAttackCooldown = .25f;
+        private const float BasicAttackForeswing = .15f;
         private const float BasicAttackDamage = 5f;
 
         Rectangle attackRectangle;
 
         private const float SpecialAttackCooldown = 2f;
 
-		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
+		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)
 		{
             attacking = false;
             attackRectangle = new Rectangle();
@@ -30,6 +31,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 1, 4, 3, 2 }, 18, true));
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
             SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 12, 11, 13, 13 }, 30, false));
+            SpriteAnimations.Add("Blocking", new Animation(new int[] { 14, 15 }, 10, false));
         }
 
         public override void Attack()
@@ -40,7 +42,7 @@ namespace Lucky_Fighters
             attacking = true;
             SetAndPlayAnimation("Attacking");
 
-            AddTask(new Task(.1f, () =>
+            AddTask(new Task(BasicAttackForeswing, () =>
             {
                 Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
                 Point center = attackHitbox.Center;
@@ -48,15 +50,17 @@ namespace Lucky_Fighters
 				{
                     if (!IsPlayerFriendly(otherPlayer))
 					{
-                        otherPlayer.TakeDamage(BasicAttackDamage);
+                        OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
 					}
 				}
                 attackRectangle = attackHitbox;
                 attacking = false;
-            }).Then(.1f, () =>
-            {
-                attackRectangle = new Rectangle();
-            }));
+            })
+			//.Then(.1f, () =>
+			//{
+			//	attackRectangle = new Rectangle();
+			//})
+			);
 
             AttackCooldown = BasicAttackCooldown;
             Console.WriteLine("Used Attack");
@@ -77,7 +81,7 @@ namespace Lucky_Fighters
         public override void Ultimate()
         {
             // TODO implement
-            if (Luck < 1f)
+            if (Luck < 100f)
                 return;
 
             Console.WriteLine("Used Ultimate");
