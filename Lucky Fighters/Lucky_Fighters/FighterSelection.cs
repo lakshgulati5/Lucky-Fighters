@@ -90,7 +90,8 @@ namespace Lucky_Fighters
         public override void Update(GameTime gameTime)
         {
             timer++;
-            GetInput();
+            if (timer > 10) //avoid taking input from previous screen
+                GetInput();
             if (timer % 10  == 0)
                 Hover();
         }
@@ -165,13 +166,13 @@ namespace Lucky_Fighters
 
                 if (ReadyToStart())
                 {
-                    if (gp[0].IsButtonDown(Buttons.Start))
+                    if (gp[x].IsButtonDown(Buttons.Start))
                     {
                         direction = Direction.Forward;
                         started = true;
                     }
                 }
-                if (gp[0].Buttons.Back == ButtonState.Pressed)
+                if (gp[x].Buttons.Back == ButtonState.Pressed)
                 {
                     direction = Direction.Backward;
                     started = true;

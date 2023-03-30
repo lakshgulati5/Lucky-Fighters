@@ -26,6 +26,7 @@ namespace Lucky_Fighters
 
         Screen screen;
         int numOfPlayers;
+        string[] selectedFighters;
 
         public Game1()
         {
@@ -62,7 +63,7 @@ namespace Lucky_Fighters
             int sh = graphics.PreferredBackBufferHeight;
 			SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
 			// testing
-			SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter", "swordfighter" }));
+			//SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter", "swordfighter" }));
 		}
 
 		public void SetScreen (Screen screen)
@@ -98,20 +99,24 @@ namespace Lucky_Fighters
             {
                 NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
                 numOfPlayers = alt.Num;
-                SetScreen(new MapSelection(Services, GameWidth, GameHeight));
-            }
-            if (screen.ReadyForNextScreen() && screen is MapSelection)
-            {
-                MapSelection alt = (MapSelection)screen;
                 SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
             }
             if (screen.ReadyForNextScreen() && screen is FighterSelection)
             {
                 FighterSelection alt = (FighterSelection)screen;
+                selectedFighters = alt.SelectedFighters();
                 if (alt.direction == Screen.Direction.Forward)
-                    SetScreen(new Map(Services, @"Content\Maps\map1.txt", alt.SelectedFighters()));
+                    SetScreen(new MapSelection(Services, GameWidth, GameHeight, numOfPlayers));
                 else
                     SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
+            }
+            if (screen.ReadyForNextScreen() && screen is MapSelection)
+            {
+                MapSelection alt = (MapSelection)screen;
+                if (alt.direction == Screen.Direction.Forward)
+                    SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters));
+                else
+                    SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
             }
 
 
