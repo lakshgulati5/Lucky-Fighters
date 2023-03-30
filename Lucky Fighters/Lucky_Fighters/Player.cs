@@ -254,6 +254,7 @@ namespace Lucky_Fighters
             Console.WriteLine("Blocked");
             blockingTime = BlockDuration;
             blockingCooldown = BlockCooldown;
+            SetAndPlayAnimation("Blocking");
         }
 
         /// <summary>
@@ -340,9 +341,13 @@ namespace Lucky_Fighters
 
             oldGamePad = gamePad;
 
-            // the following animations are overriden by attacking
+            // the following animations play until finished (all the time)
             if (currentAnim == "Attacking" && SpriteAnimations[currentAnim].IsPlaying)
                 return;
+
+            if (currentAnim == "Blocking" && IsBlocking)
+                return;
+
 
             // the following animations are overriden by jumping
             if (currentAnim == "Jumping" && !IsOnGround)
@@ -360,10 +365,10 @@ namespace Lucky_Fighters
                     SetAndPlayAnimation("Sprinting");
             }
             else
-			      {
+			{
                 if (currentAnim != "Running")
                     SetAndPlayAnimation("Running");
-			      }
+			}
         }
 
         public override void Update(GameTime gameTime)

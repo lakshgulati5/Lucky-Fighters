@@ -21,7 +21,7 @@ namespace Lucky_Fighters
 
         private const float SpecialAttackCooldown = 2f;
 
-		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 4, "swordfightersheet", playerIndex, teamId)
+		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)
 		{
             attacking = false;
             attackRectangle = new Rectangle();
@@ -30,6 +30,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 1, 4, 3, 2 }, 18, true));
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
             SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 12, 11, 13, 13 }, 30, false));
+            SpriteAnimations.Add("Blocking", new Animation(new int[] { 14, 15 }, 10, false));
         }
 
         public override void Attack()
