@@ -21,8 +21,8 @@ namespace Lucky_Fighters
         int num;
         int sw;
         int sh;
-        GamePadState oldGP;
-        GamePadState gp;
+        GamePadState[] oldGP;
+        GamePadState[] gp;
         bool ready;
         public Direction direction { get; private set; }
 
@@ -38,8 +38,11 @@ namespace Lucky_Fighters
             arrow = new Rectangle(instructions.X + instructions.Width / 2 - w - 10, instructions.Y + instructions.Height / 2 - h / 2, w, h);
             arrow1 = new Rectangle(instructions.Right - instructions.Width / 2 + w - 10, arrow.Y, w, h);
             num = 2;
-            oldGP = GamePad.GetState(PlayerIndex.One);
+            oldGP = new GamePadState[4];
+            for (int x = 0; x < 4; x++)
+                oldGP[x] = GamePad.GetState((PlayerIndex)x);
             ready = false;
+            gp = new GamePadState[4];
         }
 
         public int Num { get { return num; } }
@@ -48,7 +51,7 @@ namespace Lucky_Fighters
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(blank, instructions, Color.Red);
-            spriteBatch.DrawString(font, "Select the number of players.\nPress Start to continue.", new Vector2(instructions.X + 10, instructions.Y + 10), Color.White);
+            spriteBatch.DrawString(font, "Select the number of players.\nPress A to continue.", new Vector2(instructions.X + 10, instructions.Y + 10), Color.White);
             spriteBatch.DrawString(bigFont, "" + num, new Vector2(instructions.X + instructions.Width / 2, instructions.Bottom - instructions.Height/2 - 60), Color.White);
             spriteBatch.Draw(arrowTexture, arrow, new Rectangle(0, 0, 1800, 1570), Color.Red, 0, Vector2.Zero, SpriteEffects.FlipHorizontally, 0);
             spriteBatch.Draw(arrowTexture, arrow1, Color.Red);
@@ -74,25 +77,31 @@ namespace Lucky_Fighters
 
         public void GetInput()
         {
-            gp = GamePad.GetState(PlayerIndex.One);
-            if (gp.DPad.Left == ButtonState.Pressed && !(oldGP.DPad.Left == ButtonState.Pressed))
-                num--;
-            if (gp.DPad.Right == ButtonState.Pressed && !(oldGP.DPad.Right == ButtonState.Pressed))
-                num++;
-            if (gp.ThumbSticks.Left.X < 0 && !(oldGP.ThumbSticks.Left.X < 0))
-                num--;
-            if (gp.ThumbSticks.Left.X > 0 && !(oldGP.ThumbSticks.Left.X > 0))
-                num++;
+            for (int x = 0; x < gp.Length; x++)
+            {
+                gp[x] = GamePad.GetState((PlayerIndex)x);
+                if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
+                    num--;
+                if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
+                    num++;
+                if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
+                    num--;
+                if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
+                    num++;
+            }
             if (num < 2)
                 num = 4;
             if (num > 4)
                 num = 2;
-            if (gp.Buttons.Start == ButtonState.Pressed)
+            for (int x = 0; x < gp.Length; x++)
             {
-                direction = Direction.Forward;
-                ready = true;
+                if (gp[x].Buttons.A == ButtonState.Pressed)
+                {
+                    direction = Direction.Forward;
+                    ready = true;
+                }
+                oldGP[x] = gp[x];
             }
-            oldGP = gp;
         }
 
         public override Color GetColor()
