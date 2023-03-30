@@ -15,7 +15,7 @@ namespace Lucky_Fighters
         private Dictionary<string, Texture2D> tileSheets;
         public List<Rectangle> TileDefinitions;
 
-        
+
         Player[] players;
         string[] fighters;
         int[] lives;
@@ -68,12 +68,12 @@ namespace Lucky_Fighters
                     TileHeight);
                 TileSourceRecs.Add(i, rectTile);
             }
+
             LoadTiles(path);
         }
 
         public override void LoadContent()
         {
-           
         }
 
         private void LoadTiles(string path)
@@ -181,23 +181,24 @@ namespace Lucky_Fighters
             {
                 case "swordfighter":
                     players[(int)index] = new SwordFighter(this, start, index, (int)index);
-                    
+
                     break;
-                    /*
-                case "archer":
-                    players[(int)index] = new Archer(this, start, index, 0);
-                    break;
-                case "ninja":
-                    players[(int)index] = new Ninja(this, start, index, 0);
-                    break;
-                case "wizard":
-                    players[(int)index] = new Wizard(this, start, index, 0);
-                    break;
-                case "muscleman":
-                    players[(int)index] = new Muscleman(this, start, index, 0);
-                    break;
-                */
+                /*
+            case "archer":
+                players[(int)index] = new Archer(this, start, index, 0);
+                break;
+            case "ninja":
+                players[(int)index] = new Ninja(this, start, index, 0);
+                break;
+            case "wizard":
+                players[(int)index] = new Wizard(this, start, index, 0);
+                break;
+            case "muscleman":
+                players[(int)index] = new Muscleman(this, start, index, 0);
+                break;
+            */
             }
+
             lives[(int)index] = 3;
 
             return Tile.Empty;
@@ -213,6 +214,7 @@ namespace Lucky_Fighters
                 case "Platforms":
                     return new Tile(_tileSheetName, index, TileCollision.Platform);
             }
+
             return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
@@ -236,17 +238,18 @@ namespace Lucky_Fighters
         }
 
         public List<Player> GetCollidingPlayers(Rectangle hitbox)
-		{
+        {
             List<Player> touchingPlayers = new List<Player>();
             foreach (Player player in players)
-			{
+            {
                 if (player.Hitbox.Intersects(hitbox))
-				{
+                {
                     touchingPlayers.Add(player);
-				}
-			}
+                }
+            }
+
             return touchingPlayers;
-		}
+        }
 
         public override void Update(GameTime _gameTime)
         {
@@ -271,11 +274,14 @@ namespace Lucky_Fighters
             player.OnKilled();
             lives[index] -= 1;
         }
+
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             DrawTiles(spriteBatch);
             foreach (Player player in players)
-                player.Draw(spriteBatch, gameTime);
+            {
+                if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+            }
         }
 
         private void DrawTiles(SpriteBatch spriteBatch)

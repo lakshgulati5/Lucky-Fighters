@@ -36,7 +36,7 @@ namespace Lucky_Fighters
         const float TriggerTolerance = .9f;
 
         // player identifiers
-        PlayerIndex playerIndex;
+        public PlayerIndex playerIndex { get; }
         int teamId;
         GamePadState oldGamePad;
         protected Map Map;
@@ -84,7 +84,6 @@ namespace Lucky_Fighters
         float blockingTime;
         float blockingCooldown;
 
-        
 
         public bool IsOnGround { get; private set; }
         float previousBottom;
@@ -106,7 +105,8 @@ namespace Lucky_Fighters
                 // TODO implement
                 Rectangle rect = Rectangle;
                 int paddingX = 16, paddingY = 4;
-                return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY), rect.Width - paddingX * 2, rect.Height);
+                return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY),
+                    rect.Width - paddingX * 2, rect.Height);
             }
         }
 
@@ -135,7 +135,6 @@ namespace Lucky_Fighters
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
-           
 
             tasks = new List<Task>();
 
@@ -353,17 +352,18 @@ namespace Lucky_Fighters
             {
                 PlayAnimationIfNotPlaying("Idle");
                 return;
-			}
+            }
+
             if (sprinting)
             {
                 if (currentAnim != "Sprinting")
                     SetAndPlayAnimation("Sprinting");
             }
             else
-			      {
+            {
                 if (currentAnim != "Running")
                     SetAndPlayAnimation("Running");
-			      }
+            }
         }
 
         public override void Update(GameTime gameTime)
@@ -385,6 +385,7 @@ namespace Lucky_Fighters
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
             }
+
             for (int i = 0; i < tasks.Count; i++)
             {
                 Task task = tasks[i];
