@@ -16,7 +16,7 @@ namespace Lucky_Fighters
     {
         private const float BasicAttackCooldown = .25f;
         private const float BasicAttackForeswing = .15f;
-        private const float BasicAttackDamage = 5f;
+        private const float BasicAttackDamage = 8f;
 
         Rectangle attackRectangle;
 
@@ -34,6 +34,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
             SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 12, 11, 13, 13 }, 30, false));
             SpriteAnimations.Add("Blocking", new Animation(new int[] { 14, 15 }, 10, false));
+            SpriteAnimations.Add("Hurt", new Animation(new int[] { 16, 17 }, 10, false));
         }
 
         public override void Attack()

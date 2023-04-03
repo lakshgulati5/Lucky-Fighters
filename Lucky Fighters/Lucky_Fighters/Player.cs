@@ -189,6 +189,9 @@ namespace Lucky_Fighters
         /// <returns>Final damage taken</returns>
         public float TakeDamage(float damage)
         {
+            if (IsDead)
+                return 0f;
+
             if (damage == 0)
                 return 0f;
 
@@ -204,6 +207,8 @@ namespace Lucky_Fighters
 			{
                 // if not blocking, disable the player for a brief duration
 			    DisabledTime = DamageDisableDuration;
+                // also play the hurt animation
+                SetAndPlayAnimation("Hurt");
 			}
 
             // damage to deal to the second health bar
@@ -375,7 +380,8 @@ namespace Lucky_Fighters
 
             if (currentAnim == "Blocking" && IsBlocking)
                 return;
-
+            if (currentAnim == "Hurt" && SpriteAnimations[currentAnim].IsPlaying)
+                return;
 
             // the following animations are overriden by jumping
             if (currentAnim == "Jumping" && !IsOnGround)
