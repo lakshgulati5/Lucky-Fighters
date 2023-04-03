@@ -56,7 +56,7 @@ namespace Lucky_Fighters
                         OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
 					}
 				}
-                attackRectangle = attackHitbox;
+                // attackRectangle = attackHitbox;
                 attacking = false;
             })
 			//.Then(.1f, () =>
@@ -79,7 +79,7 @@ namespace Lucky_Fighters
             SetAndPlayAnimation("Attacking"); //Add special attack animation?
 
             AddTask(
-                new Task(.1f, () =>
+                new Task(.3f, () =>
                     {
                         var specialAttackHitbox =
                             GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 100, 140));
@@ -90,9 +90,9 @@ namespace Lucky_Fighters
                         }
 
                         attackRectangle = specialAttackHitbox;
-                        attacking = false;
+                        
                     }
-                ).Then(.1f, () => { attackRectangle = new Rectangle(); }));
+                ).Then(.3f, () => { attackRectangle = new Rectangle(); attacking = false; }));
 
 
             SpecialCooldown = SpecialAttackCooldown;

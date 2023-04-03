@@ -56,7 +56,7 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
-            lives = new int[fighters.Length];
+            // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
             for (int i = 0; i < TilesPerRow * NumRowsPerSheet; i++)
@@ -199,7 +199,8 @@ namespace Lucky_Fighters
             */
             }
 
-            lives[(int)index] = 3;
+            // lives[(int)index] = 3;
+            // players[(int)index].lives = 3;
 
             return Tile.Empty;
         }
@@ -272,7 +273,8 @@ namespace Lucky_Fighters
                 return;
 
             player.OnKilled();
-            lives[index] -= 1;
+            // lives[index] -= 1;
+            player.lives -= 1;
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -280,7 +282,8 @@ namespace Lucky_Fighters
             DrawTiles(spriteBatch);
             foreach (Player player in players)
             {
-                if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+                // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+                if(player.lives > 0) player.Draw(spriteBatch, gameTime);
             }
         }
 

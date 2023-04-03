@@ -61,6 +61,7 @@ namespace Lucky_Fighters
         public float Health { get; private set; }
         public float AdditionalHealth { get; private set; }
 
+
         public bool IsDead => Health <= 0;
 
         public bool IsCompletelyDead { get; private set; }
@@ -75,6 +76,8 @@ namespace Lucky_Fighters
         public float AttackCooldown { get; protected set; }
         public float SpecialCooldown { get; protected set; }
 
+        public int lives { get; set; }
+
         bool IsDodging => dodgingTime > 0;
 
         float dodgingTime;
@@ -84,6 +87,7 @@ namespace Lucky_Fighters
         float blockingTime;
         float blockingCooldown;
 
+        private SpriteFont font;
 
         public bool IsOnGround { get; private set; }
         float previousBottom;
@@ -125,7 +129,8 @@ namespace Lucky_Fighters
         SpriteEffects flip;
 
         public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow,
-            string spriteSheetName, PlayerIndex playerIndex, int teamId) : base(frameWidth, frameHeight, framesPerRow)
+            string spriteSheetName, PlayerIndex playerIndex, int teamId, int lives = 3) : base(frameWidth, frameHeight,
+            framesPerRow)
         {
             Map = map;
             this.weightMultiplier = weightMultiplier;
@@ -135,6 +140,9 @@ namespace Lucky_Fighters
             this.playerIndex = playerIndex;
             this.teamId = teamId;
 
+            this.lives = lives;
+
+            font = Map.Content.Load<SpriteFont>("SpriteFont1");
 
             tasks = new List<Task>();
 
@@ -167,6 +175,8 @@ namespace Lucky_Fighters
             Position = start;
             Velocity = Vector2.Zero;
 
+            StartedRespawning = false;
+
             Health = MaxHealth;
             AdditionalHealth = MaxHealth;
             IsCompletelyDead = false;
@@ -196,20 +206,20 @@ namespace Lucky_Fighters
                 return 0f;
 
             if (IsDodging)
-				return 0f;
+                return 0f;
 
-			if (IsBlocking)
-			{
-				damage *= BlockDamageFactor;
-				blockingTime = 0;
-			}
+            if (IsBlocking)
+            {
+                damage *= BlockDamageFactor;
+                blockingTime = 0;
+            }
             else
-			{
+            {
                 // if not blocking, disable the player for a brief duration
-			    DisabledTime = DamageDisableDuration;
+                DisabledTime = DamageDisableDuration;
                 // also play the hurt animation
                 SetAndPlayAnimation("Hurt");
-			}
+            }
 
             // damage to deal to the second health bar
             float additionalHealthDamage = Math.Min(damage, AdditionalHealth);
@@ -257,9 +267,9 @@ namespace Lucky_Fighters
         /// </summary>
         /// <param name="additionalLuck">Luck added to the luck bar</param>
         private void IncrementLuck(float additionalLuck)
-		{
+        {
             Luck = Math.Min(Luck + additionalLuck, 100f);
-		}
+        }
 
         /// <summary>
         /// Make the player attack
@@ -405,7 +415,6 @@ namespace Lucky_Fighters
                 if (currentAnim != "Running")
                     SetAndPlayAnimation("Running");
             }
-
         }
 
         public override void Update(GameTime gameTime)
@@ -602,6 +611,7 @@ namespace Lucky_Fighters
 
             spriteBatch.Draw(blank, healthBar, Color.Lime);
             spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
+            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X, background.Y), Color.White);
         }
     }
 }
