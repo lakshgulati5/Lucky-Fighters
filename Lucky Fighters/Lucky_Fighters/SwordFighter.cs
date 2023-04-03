@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.GamerServices;
@@ -21,6 +21,8 @@ namespace Lucky_Fighters
         Rectangle attackRectangle;
 
         private const float SpecialAttackCooldown = 2f;
+        private const float SpecialAttackDamage = 25f;
+
 
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)
 		{
@@ -47,7 +49,7 @@ namespace Lucky_Fighters
                 Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 80, 120));
                 Point center = attackHitbox.Center;
                 foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
-				{
+                {
                     if (!IsPlayerFriendly(otherPlayer))
 					{
                         OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
@@ -62,6 +64,7 @@ namespace Lucky_Fighters
 			//})
 			);
 
+
             AttackCooldown = BasicAttackCooldown;
             Console.WriteLine("Used Attack");
         }
@@ -69,9 +72,26 @@ namespace Lucky_Fighters
         public override void SpecialAttack()
         {
             // TODO implement
-            if (SpecialCooldown > 0f)
-                return;
+            if (SpecialCooldown > 0f || attacking) return;
 
+            attacking = true;
+            SetAndPlayAnimation("Attacking"); //Add special attack animation?
+
+            AddTask(
+                new Task(.1f, () =>
+                    {
+                        var specialAttackHitbox =
+                            GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 100, 140));
+                        foreach (var otherPlayer in Map.GetCollidingPlayers(specialAttackHitbox)
+                                     .Where(otherPlayer => !IsPlayerFriendly(otherPlayer)))
+                        {
+                            otherPlayer.TakeDamage(SpecialAttackDamage);
+                        }
+
+                        attackRectangle = specialAttackHitbox;
+                        attacking = false;
+                    }
+                ).Then(.1f, () => { attackRectangle = new Rectangle(); }));
 
 
             SpecialCooldown = SpecialAttackCooldown;
@@ -88,9 +108,9 @@ namespace Lucky_Fighters
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
-		{
+        {
             base.Draw(spriteBatch, gameTime);
-            //spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
-		}
+            // spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
+        }
     }
 }
