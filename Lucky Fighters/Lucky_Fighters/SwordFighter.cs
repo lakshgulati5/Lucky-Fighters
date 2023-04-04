@@ -72,11 +72,10 @@ namespace Lucky_Fighters
 
         public override void SpecialAttack()
         {
-            // TODO implement
             if (SpecialCooldown > 0f || attacking) return;
 
             attacking = true;
-            SetAndPlayAnimation("Attacking"); //Add special attack animation?
+            SetAndPlayAnimation("Attacking"); // TODO Add special attack animation?
 
             AddTask(
                 new Task(.3f, () =>
@@ -111,7 +110,7 @@ namespace Lucky_Fighters
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             base.Draw(spriteBatch, gameTime);
-            // spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
+            spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
         }
     }
 }

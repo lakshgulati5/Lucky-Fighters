@@ -106,7 +106,6 @@ namespace Lucky_Fighters
         {
             get
             {
-                // TODO implement
                 Rectangle rect = Rectangle;
                 int paddingX = 16, paddingY = 4;
                 return new Rectangle((int)(rect.X - Origin.X + paddingX), (int)(rect.Y - Origin.Y + paddingY),
@@ -171,7 +170,6 @@ namespace Lucky_Fighters
 
         public void Reset(Vector2 start)
         {
-            // TODO implement
             Position = start;
             Velocity = Vector2.Zero;
 
@@ -345,7 +343,6 @@ namespace Lucky_Fighters
                 if (Math.Abs(movement) < .1f)
                     movement = 0f;
 
-                // TODO check for attacks and other input
                 if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
                     gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
                 {
@@ -359,9 +356,16 @@ namespace Lucky_Fighters
 
                 if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
                 {
-                    // TODO add check for luck bar
                     SpecialAttack();
                 }
+
+                /*
+                if (gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                {
+                    // fighter subclasses may not use entire luck bar
+                    Ultimate();
+                }
+                */
 
                 if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
                     oldGamePad.Buttons.RightShoulder == ButtonState.Released)
