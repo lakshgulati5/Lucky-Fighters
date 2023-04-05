@@ -19,6 +19,8 @@ namespace Lucky_Fighters
         public const int GameWidth = 1344;
         public const int GameHeight = 768;
 
+        public const bool TestingMode = false;
+
         public static readonly Color[] DefaultColors = new Color[] { Color.Blue, Color.Red, Color.Green, Color.Yellow };
 
         GraphicsDeviceManager graphics;
@@ -95,28 +97,32 @@ namespace Lucky_Fighters
             // TODO: Add your update logic here
             //map.Update(gameTime);
             screen.Update(gameTime);
-            if (screen.ReadyForNextScreen() && screen is NumberOfPlayerSelection)
+
+            if (screen.ReadyForNextScreen())
             {
-                NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
-                numOfPlayers = alt.Num;
-                SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
-            }
-            if (screen.ReadyForNextScreen() && screen is FighterSelection)
-            {
-                FighterSelection alt = (FighterSelection)screen;
-                selectedFighters = alt.SelectedFighters();
-                if (alt.direction == Screen.Direction.Forward)
-                    SetScreen(new MapSelection(Services, GameWidth, GameHeight, numOfPlayers));
-                else
-                    SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
-            }
-            if (screen.ReadyForNextScreen() && screen is MapSelection)
-            {
-                MapSelection alt = (MapSelection)screen;
-                if (alt.direction == Screen.Direction.Forward)
-                    SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters));
-                else
+                if (screen is NumberOfPlayerSelection)
+                {
+                    NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
+                    numOfPlayers = alt.Num;
                     SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
+                }
+                else if (screen is FighterSelection)
+                {
+                    FighterSelection alt = (FighterSelection)screen;
+                    selectedFighters = alt.SelectedFighters();
+                    if (alt.direction == Screen.Direction.Forward)
+                        SetScreen(new MapSelection(Services, GameWidth, GameHeight, numOfPlayers));
+                    else
+                        SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
+                }
+                else if (screen is MapSelection)
+                {
+                    MapSelection alt = (MapSelection)screen;
+                    if (alt.direction == Screen.Direction.Forward)
+                        SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters));
+                    else
+                        SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
+                }
             }
 
 

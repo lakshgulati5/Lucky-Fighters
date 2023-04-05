@@ -258,7 +258,7 @@ namespace Lucky_Fighters
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
-                if (player.IsCompletelyDead) player.Reset(starts[x]);
+                if (player.IsCompletelyDead && player.lives > 0) player.Reset(starts[x]);
                 if (player.IsDead) OnPlayerKilled(x);
 
                 x++;
@@ -282,8 +282,9 @@ namespace Lucky_Fighters
             DrawTiles(spriteBatch);
             foreach (Player player in players)
             {
-                // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
-                if(player.lives > 0) player.Draw(spriteBatch, gameTime);
+				// if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+				if (player.lives > 0 || !player.IsCompletelyDead)
+					player.Draw(spriteBatch, gameTime);
             }
         }
 
