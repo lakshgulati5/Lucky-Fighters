@@ -82,6 +82,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Game1.cs" />
     <Compile Include="ClassExtensions.cs" />
+    <Compile Include="Results.cs" />
     <Compile Include="Screen.cs" />
     <Compile Include="SwordFighter.cs" />
     <Compile Include="Task.cs" />

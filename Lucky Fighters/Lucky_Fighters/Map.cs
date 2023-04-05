@@ -18,7 +18,8 @@ namespace Lucky_Fighters
 
         Player[] players;
         string[] fighters;
-        int[] lives;
+        bool ready;
+        public Player winner;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -254,15 +255,28 @@ namespace Lucky_Fighters
 
         public override void Update(GameTime _gameTime)
         {
+            bool someoneAlive = false;
+            bool multipleAlive = false;
             int x = 0;
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
                 if (player.IsCompletelyDead) player.Reset(starts[x]);
                 if (player.IsDead) OnPlayerKilled(x);
-
+                if (player.lives > 0)
+                {
+                    if (someoneAlive)
+                        multipleAlive = true;
+                    else
+                    {
+                        someoneAlive = true;
+                        winner = player;
+                    }
+                }
                 x++;
             }
+            if (!multipleAlive)
+                ready = true;
         }
 
 
@@ -315,7 +329,7 @@ namespace Lucky_Fighters
 
         public override bool ReadyForNextScreen()
         {
-            return false;
+            return ready;
         }
 
         public override Color GetColor()
