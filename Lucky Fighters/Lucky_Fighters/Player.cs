@@ -88,6 +88,7 @@ namespace Lucky_Fighters
         float blockingCooldown;
 
         private SpriteFont font;
+        private SpriteFont boldFont;
 
         public bool IsOnGround { get; private set; }
         float previousBottom;
@@ -142,6 +143,7 @@ namespace Lucky_Fighters
             this.lives = lives;
 
             font = Map.Content.Load<SpriteFont>("SpriteFont1");
+            boldFont = Map.Content.Load<SpriteFont>("Bold");
 
             tasks = new List<Task>();
 
@@ -197,6 +199,9 @@ namespace Lucky_Fighters
         /// <returns>Final damage taken</returns>
         public float TakeDamage(float damage)
         {
+            if (Game1.TestingMode)
+                damage *= 10;
+
             if (IsDead)
                 return 0f;
 
@@ -565,16 +570,23 @@ namespace Lucky_Fighters
             previousBottom = bounds.Bottom;
         }
 
+        private Color GetColor()
+		{
+            return Game1.DefaultColors[teamId];
+		}
+
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle,
-                Color.Lerp(Color.White, Game1.DefaultColors[(int)playerIndex], .8f), 0f, Origin, flip, 0f);
+                Color.Lerp(Color.White, GetColor(), .8f), 0f, Origin, flip, 0f);
             DrawHealthBar(spriteBatch);
+            DrawNameTag(spriteBatch);
         }
 
         public void DrawHealthBar(SpriteBatch spriteBatch)
         {
             int index = (int)playerIndex;
+            Color color = GetColor();
 
             int xMargin = Game1.GameWidth / 12;
             int yMargin = 10;
@@ -607,7 +619,7 @@ namespace Lucky_Fighters
                 barBackgroundHeight - barPadding * 2);
 
             // draw the bars
-            spriteBatch.Draw(blank, background, Game1.DefaultColors[index]);
+            spriteBatch.Draw(blank, background, color);
             foreach (Rectangle rect in barBackgrounds)
             {
                 spriteBatch.Draw(blank, rect, new Color(.2f, .2f, .2f));
@@ -615,7 +627,17 @@ namespace Lucky_Fighters
 
             spriteBatch.Draw(blank, healthBar, Color.Lime);
             spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
-            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X, background.Y), Color.White);
+            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X + barPadding, background.Y + barPadding), Color.White);
+        }
+
+        public void DrawNameTag(SpriteBatch spriteBatch)
+		{
+            Rectangle hitbox = Hitbox;
+            string text = "P" + ((int)playerIndex + 1);
+            Vector2 textBounds = boldFont.MeasureString(text);
+            Vector2 position = new Vector2(hitbox.Center.X - textBounds.X / 2, hitbox.Top - textBounds.Y);
+            spriteBatch.DrawString(boldFont, text, position + new Vector2(0, 1), Color.White);
+            spriteBatch.DrawString(boldFont, text, position, GetColor());
         }
     }
 }

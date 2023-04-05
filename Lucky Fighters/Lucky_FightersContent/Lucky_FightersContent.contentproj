@@ -41,6 +41,11 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
     </Compile>
+    <Compile Include="Bold.spritefont">
+      <Name>Bold</Name>
+      <Importer>FontDescriptionImporter</Importer>
+      <Processor>FontDescriptionProcessor</Processor>
+    </Compile>
     <None Include="Maps\map1.txt">
       <Name>map1</Name>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

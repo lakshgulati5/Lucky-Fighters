@@ -65,7 +65,6 @@ namespace Lucky_Fighters
 			//})
 			);
 
-
             AttackCooldown = BasicAttackCooldown;
             Console.WriteLine("Used Attack");
         }
