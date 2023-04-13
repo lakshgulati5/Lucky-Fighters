@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,6 +25,8 @@ namespace Lucky_Fighters
         // holds the starting point for the level for each player
         private Vector2[] starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
+
+        SoundEffectInstance backgroundMusic;
 
         public ContentManager Content { get; }
 
@@ -71,6 +74,9 @@ namespace Lucky_Fighters
             }
 
             LoadTiles(path);
+
+            backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.Play();
         }
 
         public override void LoadContent()
