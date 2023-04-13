@@ -54,6 +54,8 @@ namespace Lucky_Fighters
 
 		public void SetAndPlayAnimation(string animationName)
 		{
+			if (!SpriteAnimations.ContainsKey(animationName))
+				return;
 			SpriteAnimations[currentAnim].Stop();
 			currentAnim = animationName;
 			SpriteAnimations[animationName].Play();

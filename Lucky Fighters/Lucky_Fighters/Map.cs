@@ -190,20 +190,20 @@ namespace Lucky_Fighters
                     players[(int)index] = new SwordFighter(this, start, index, (int)index);
 
                     break;
+                case "archer":
+                    players[(int)index] = new Archer(this, start, index, (int)index);
+                    break;
                 /*
-            case "archer":
-                players[(int)index] = new Archer(this, start, index, 0);
-                break;
-            case "ninja":
-                players[(int)index] = new Ninja(this, start, index, 0);
-                break;
-            case "wizard":
-                players[(int)index] = new Wizard(this, start, index, 0);
-                break;
-            case "muscleman":
-                players[(int)index] = new Muscleman(this, start, index, 0);
-                break;
-            */
+                case "ninja":
+                    players[(int)index] = new Ninja(this, start, index, 0);
+                    break;
+                case "wizard":
+                    players[(int)index] = new Wizard(this, start, index, 0);
+                    break;
+                case "muscleman":
+                    players[(int)index] = new Muscleman(this, start, index, 0);
+                    break;
+                */
             }
 
             // lives[(int)index] = 3;

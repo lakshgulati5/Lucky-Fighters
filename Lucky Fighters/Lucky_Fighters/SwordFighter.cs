@@ -26,7 +26,6 @@ namespace Lucky_Fighters
 
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)
 		{
-            attacking = false;
             attackRectangle = new Rectangle();
             SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 5 }, 4, true));
             SpriteAnimations.Add("Running", new Animation(new int[] { 1, 4, 3, 2 }, 14, true));

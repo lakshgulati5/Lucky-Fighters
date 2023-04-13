@@ -42,6 +42,7 @@ namespace Lucky_Fighters
         public PlayerIndex playerIndex { get; }
         int teamId;
         GamePadState oldGamePad;
+        KeyboardState oldKb;
         protected Map Map;
 
         // combat and movement info
@@ -134,6 +135,7 @@ namespace Lucky_Fighters
         {
             Map = map;
             this.weightMultiplier = weightMultiplier;
+            attacking = false;
 
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             blank = map.Content.Load<Texture2D>("blank");
@@ -342,14 +344,22 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
+            KeyboardState kb = Keyboard.GetState();
             if (CanMove)
             {
                 movement = gamePad.ThumbSticks.Left.X;
+                if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
+                    movement += -1;
+                if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One)
+                    movement += 1;
                 if (Math.Abs(movement) < .1f)
                     movement = 0f;
+                else
+                    movement = MathHelper.Clamp(movement, -1f, 1f);
 
                 if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
-                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
                 {
                     SendJump();
                 }
@@ -383,7 +393,7 @@ namespace Lucky_Fighters
                     Block();
                 }
 
-                sprinting = gamePad.Triggers.Left >= TriggerTolerance;
+                sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
             }
             else
@@ -392,6 +402,7 @@ namespace Lucky_Fighters
             }
 
             oldGamePad = gamePad;
+            oldKb = kb;
 
             // the following animations play until finished (all the time)
             if (currentAnim == "Attacking" && SpriteAnimations[currentAnim].IsPlaying)
@@ -577,8 +588,11 @@ namespace Lucky_Fighters
 
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
+            Color playerColor = Color.Lerp(Color.White, GetColor(), .8f);
+            if (IsDodging)
+                playerColor = Color.Lerp(playerColor, Color.Transparent, .8f);
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle,
-                Color.Lerp(Color.White, GetColor(), .8f), 0f, Origin, flip, 0f);
+                playerColor, 0f, Origin, flip, 0f);
             DrawHealthBar(spriteBatch);
             DrawNameTag(spriteBatch);
         }
