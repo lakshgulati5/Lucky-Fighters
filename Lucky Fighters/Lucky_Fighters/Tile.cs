@@ -29,7 +29,7 @@ namespace Lucky_Fighters
         /// </summary>
         Platform = 2,
     }
-    class Tile
+    public class Tile
     {
         public static readonly Tile Empty = new Tile(string.Empty, 0, TileCollision.Passable);
 

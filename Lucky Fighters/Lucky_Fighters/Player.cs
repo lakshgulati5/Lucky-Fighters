@@ -58,7 +58,7 @@ namespace Lucky_Fighters
         /// </summary>
         float weightMultiplier;
 
-        public float Health { get; private set; }
+        public float Health { get; set; }
         public float AdditionalHealth { get; private set; }
 
 
@@ -284,6 +284,7 @@ namespace Lucky_Fighters
         /// </summary>
         public abstract void SpecialAttack();
 
+
         /// <summary>
         /// Make the player use the ultimate (requires luck bar to be full)
         /// </summary>
@@ -383,6 +384,12 @@ namespace Lucky_Fighters
                     Block();
                 }
 
+                if (gamePad.Buttons.LeftStick == ButtonState.Pressed &&
+                    oldGamePad.Buttons.LeftStick == ButtonState.Released)
+                {
+                    Interact();
+                }
+
                 sprinting = gamePad.Triggers.Left >= TriggerTolerance;
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
             }
@@ -425,6 +432,24 @@ namespace Lucky_Fighters
                     SetAndPlayAnimation("Running");
             }
         }
+
+        private void Interact()
+        {
+            foreach (var key in Map.Interactives.Keys)
+            {
+                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, 96, 96);
+
+                if (Hitbox.Intersects(interactiveHitbox))
+                {
+                    Map.Interactives[key].ApplyEffect(this);
+                    var _ = new Task(1, () =>
+                    {
+                        Map.Interactives.Remove(key);
+                    });
+                }
+            }
+        }
+
 
         public override void Update(GameTime gameTime)
         {
@@ -571,9 +596,9 @@ namespace Lucky_Fighters
         }
 
         private Color GetColor()
-		{
+        {
             return Game1.DefaultColors[teamId];
-		}
+        }
 
         public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
@@ -627,11 +652,12 @@ namespace Lucky_Fighters
 
             spriteBatch.Draw(blank, healthBar, Color.Lime);
             spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
-            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X + barPadding, background.Y + barPadding), Color.White);
+            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X + barPadding, background.Y + barPadding),
+                Color.White);
         }
 
         public void DrawNameTag(SpriteBatch spriteBatch)
-		{
+        {
             Rectangle hitbox = Hitbox;
             string text = "P" + ((int)playerIndex + 1);
             Vector2 textBounds = boldFont.MeasureString(text);
