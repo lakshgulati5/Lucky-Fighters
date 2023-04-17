@@ -22,6 +22,8 @@ namespace Lucky_Fighters
 
         private const float SpecialAttackCooldown = 2f;
         private const float SpecialAttackDamage = 25f;
+        private const float SpecialAttackForeswing = .3f;
+        private const float SpecialAttackBackswing = .3f;
 
 
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)
@@ -34,6 +36,7 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 12, 11, 13, 13 }, 30, false));
             SpriteAnimations.Add("Blocking", new Animation(new int[] { 14, 15 }, 10, false));
             SpriteAnimations.Add("Hurt", new Animation(new int[] { 16, 17 }, 10, false));
+            SpriteAnimations.Add("SpecialAttacking", new Animation(new int[] { 18, 19, 20, 20, 21, 22, 23, 24 }, 18, false));
         }
 
         public override void Attack()
@@ -65,7 +68,6 @@ namespace Lucky_Fighters
 			);
 
             AttackCooldown = BasicAttackCooldown;
-            Console.WriteLine("Used Attack");
         }
 
         public override void SpecialAttack()
@@ -73,27 +75,28 @@ namespace Lucky_Fighters
             if (SpecialCooldown > 0f || attacking) return;
 
             attacking = true;
-            SetAndPlayAnimation("Attacking"); // TODO Add special attack animation?
+            SetAndPlayAnimation("SpecialAttacking");
 
-            AddTask(
-                new Task(.3f, () =>
-                    {
-                        var specialAttackHitbox =
-                            GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 100, 140));
-                        foreach (var otherPlayer in Map.GetCollidingPlayers(specialAttackHitbox)
-                                     .Where(otherPlayer => !IsPlayerFriendly(otherPlayer)))
-                        {
-                            otherPlayer.TakeDamage(SpecialAttackDamage);
-                        }
+            AddTask(new Task(SpecialAttackForeswing, () =>
+            {
+                var specialAttackHitbox =
+                    GetAdjustedAttackHitbox(new Rectangle(Hitbox.Width / 3, -150, 100, 140));
+                foreach (var otherPlayer in Map.GetCollidingPlayers(specialAttackHitbox)
+                    .Where(otherPlayer => !IsPlayerFriendly(otherPlayer)))
+                {
+                    otherPlayer.TakeDamage(SpecialAttackDamage);
+                }
 
-                        attackRectangle = specialAttackHitbox;
-                        
-                    }
-                ).Then(.3f, () => { attackRectangle = new Rectangle(); attacking = false; }));
-
+                //attackRectangle = specialAttackHitbox;
+            })
+            .Then(SpecialAttackBackswing, () =>
+            {
+                attacking = false;
+                //attackRectangle = new Rectangle();
+            })
+            );
 
             SpecialCooldown = SpecialAttackCooldown;
-            Console.WriteLine("Used Special Attack");
         }
 
         public override void Ultimate()
@@ -101,14 +104,12 @@ namespace Lucky_Fighters
             // TODO implement
             if (Luck < 100f)
                 return;
-
-            Console.WriteLine("Used Ultimate");
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
             base.Draw(spriteBatch, gameTime);
-            spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
+            //spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
         }
     }
 }

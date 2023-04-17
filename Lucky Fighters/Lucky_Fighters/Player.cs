@@ -233,9 +233,6 @@ namespace Lucky_Fighters
             // Player receives some luck from taking damage
             IncrementLuck(damage * LuckPerDamageTaken);
 
-            Console.WriteLine("Took " + damage + " damage");
-
-
             return damage;
         }
 
@@ -299,7 +296,6 @@ namespace Lucky_Fighters
             if (blockingCooldown > 0f)
                 return;
 
-            Console.WriteLine("Blocked");
             blockingTime = BlockDuration;
             blockingCooldown = BlockCooldown;
             SetAndPlayAnimation("Blocking");
@@ -313,7 +309,6 @@ namespace Lucky_Fighters
             if (dodgingCooldown > 0f)
                 return;
 
-            Console.WriteLine("Dodged");
             dodgingTime = DodgeDuration;
             dodgingCooldown = DodgeCooldown;
         }
@@ -364,12 +359,14 @@ namespace Lucky_Fighters
                     SendJump();
                 }
 
-                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released)
+                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W))
                 {
                     Attack();
                 }
 
-                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
+                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S))
                 {
                     SpecialAttack();
                 }
@@ -406,6 +403,8 @@ namespace Lucky_Fighters
 
             // the following animations play until finished (all the time)
             if (currentAnim == "Attacking" && SpriteAnimations[currentAnim].IsPlaying)
+                return;
+            if (currentAnim == "SpecialAttacking" && SpriteAnimations[currentAnim].IsPlaying)
                 return;
 
             if (currentAnim == "Blocking" && IsBlocking)

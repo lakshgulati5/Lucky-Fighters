@@ -14,6 +14,11 @@ namespace Lucky_Fighters
 {
     class Archer : Player
     {
+        private const float BasicAttackCooldown = .8f;
+        private const float BasicAttackForeswing = .55f;
+        private const float BasicAttackDamage = 15f;
+        private const float BasicAttackBackswing = .1f;
+
         public Archer(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "archersheet", playerIndex, teamId)
         {
             attacking = false;
@@ -21,21 +26,39 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Running", new Animation(new int[] { 2, 3, 4, 5 }, 14, true));
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 2, 3, 4, 5 }, 18, true));
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
+            SpriteAnimations.Add("Attacking", new Animation(new int[] { 9, 10, 11, 12, 13, 13, 14, 15, 16 }, 16, false));
         }
 
         public override void Attack()
         {
-            throw new NotImplementedException();
+            if (SpecialCooldown > 0f || attacking) return;
+
+            attacking = true;
+            SetAndPlayAnimation("Attacking");
+
+            AddTask(new Task(BasicAttackForeswing, () =>
+            {
+
+            })
+            .Then(BasicAttackBackswing, () =>
+            {
+                attacking = false;
+            })
+            );
+
+            AttackCooldown = BasicAttackCooldown;
         }
 
         public override void SpecialAttack()
         {
-            throw new NotImplementedException();
+            // TODO implement
         }
 
         public override void Ultimate()
         {
-            throw new NotImplementedException();
+            // TODO implement
+            if (Luck < 100f)
+                return;
         }
     }
 }
