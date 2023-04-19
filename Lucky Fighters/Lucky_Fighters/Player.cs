@@ -18,7 +18,7 @@ namespace Lucky_Fighters
         const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
-        const float Gravity = 2000f;
+        public const float Gravity = 2000f;
         const float JumpPower = 800f;
         const float JumpTolerance = .2f;
         const float SprintingMultiplier = 1.5f;
@@ -42,6 +42,7 @@ namespace Lucky_Fighters
         public PlayerIndex playerIndex { get; }
         int teamId;
         GamePadState oldGamePad;
+        KeyboardState oldKb;
         protected Map Map;
 
         // combat and movement info
@@ -58,9 +59,10 @@ namespace Lucky_Fighters
         /// </summary>
         float weightMultiplier;
 
-        public float Health { get; private set; }
+        public float Health { get; set; }
         public float AdditionalHealth { get; private set; }
 
+        public bool IsShielded { get; set; }
 
         public bool IsDead => Health <= 0;
 
@@ -90,6 +92,8 @@ namespace Lucky_Fighters
         private SpriteFont font;
         private SpriteFont boldFont;
 
+        private Texture2D shieldBubble;
+
         public bool IsOnGround { get; private set; }
         float previousBottom;
 
@@ -100,7 +104,7 @@ namespace Lucky_Fighters
         /// </summary>
         public float DisabledTime;
 
-        public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0;
+        public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0 && !Map.paused;
 
         List<Task> tasks;
 
@@ -123,12 +127,9 @@ namespace Lucky_Fighters
         /// <summary>
         /// The rectangle to be used for drawing
         /// </summary>
-        Rectangle Rectangle
-        {
-            get { return new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight); }
-        }
+        Rectangle Rectangle => new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight);
 
-        SpriteEffects flip;
+        protected SpriteEffects flip;
 
         public Player(Map map, Vector2 start, float weightMultiplier, int frameWidth, int frameHeight, int framesPerRow,
             string spriteSheetName, PlayerIndex playerIndex, int teamId, int lives = 3) : base(frameWidth, frameHeight,
@@ -136,6 +137,7 @@ namespace Lucky_Fighters
         {
             Map = map;
             this.weightMultiplier = weightMultiplier;
+            attacking = false;
 
             spriteSheet = map.Content.Load<Texture2D>(@"Fighters\" + spriteSheetName);
             blank = map.Content.Load<Texture2D>("blank");
@@ -148,6 +150,8 @@ namespace Lucky_Fighters
             boldFont = Map.Content.Load<SpriteFont>("Bold");
 
             tasks = new List<Task>();
+
+            shieldBubble = Map.Content.Load<Texture2D>("Interactives/ShieldBubble");
 
             // add more to this list as more functionality is added
             // fighter subclasses should implement the following animations: Idle, Running
@@ -210,7 +214,7 @@ namespace Lucky_Fighters
             if (damage == 0)
                 return 0f;
 
-            if (IsDodging)
+            if (IsDodging || IsShielded)
                 return 0f;
 
             if (IsBlocking)
@@ -233,11 +237,9 @@ namespace Lucky_Fighters
             // Player receives some luck from taking damage
             IncrementLuck(damage * LuckPerDamageTaken);
 
-            Console.WriteLine("Took " + damage + " damage");
-
-
             return damage;
         }
+
 
         /// <summary>
         /// Get an adjusted rectangle for the given hitbox (the hitbox x = 0 is at the player's center x, y = 0 is at the feet)
@@ -286,6 +288,7 @@ namespace Lucky_Fighters
         /// </summary>
         public abstract void SpecialAttack();
 
+
         /// <summary>
         /// Make the player use the ultimate (requires luck bar to be full)
         /// </summary>
@@ -299,7 +302,6 @@ namespace Lucky_Fighters
             if (blockingCooldown > 0f)
                 return;
 
-            Console.WriteLine("Blocked");
             blockingTime = BlockDuration;
             blockingCooldown = BlockCooldown;
             SetAndPlayAnimation("Blocking");
@@ -313,7 +315,6 @@ namespace Lucky_Fighters
             if (dodgingCooldown > 0f)
                 return;
 
-            Console.WriteLine("Dodged");
             dodgingTime = DodgeDuration;
             dodgingCooldown = DodgeCooldown;
         }
@@ -352,24 +353,40 @@ namespace Lucky_Fighters
                         Map.paused = false;
                 }
             }
-            else if (CanMove)
+
+            KeyboardState kb = Keyboard.GetState();
+            movement = gamePad.ThumbSticks.Left.X;
+            if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
+                movement += -1;
+            if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One)
+                movement += 1;
+            if (Math.Abs(movement) < .1f)
+                movement = 0f;
+            else
+                movement = MathHelper.Clamp(movement, -1f, 1f);
+            // flip the sprite based on the direction the player is inputting
+            if (movement < 0)
+                flip = SpriteEffects.FlipHorizontally;
+            else if (movement > 0)
+                flip = SpriteEffects.None
+            if (CanMove)
             {
-                movement = gamePad.ThumbSticks.Left.X;
-                if (Math.Abs(movement) < .1f)
-                    movement = 0f;
 
                 if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
-                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
                 {
                     SendJump();
                 }
 
-                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released)
+                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W))
                 {
                     Attack();
                 }
 
-                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released)
+                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S))
                 {
                     SpecialAttack();
                 }
@@ -393,7 +410,12 @@ namespace Lucky_Fighters
                     Block();
                 }
 
-                sprinting = gamePad.Triggers.Left >= TriggerTolerance;
+                if (gamePad.Buttons.LeftStick == ButtonState.Pressed &&
+                    oldGamePad.Buttons.LeftStick == ButtonState.Released)
+                {
+                    Interact();
+                }
+                sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
 
                 if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
@@ -408,9 +430,12 @@ namespace Lucky_Fighters
             }
 
             oldGamePad = gamePad;
+            oldKb = kb;
 
             // the following animations play until finished (all the time)
             if (currentAnim == "Attacking" && SpriteAnimations[currentAnim].IsPlaying)
+                return;
+            if (currentAnim == "SpecialAttacking" && SpriteAnimations[currentAnim].IsPlaying)
                 return;
 
             if (currentAnim == "Blocking" && IsBlocking)
@@ -441,6 +466,21 @@ namespace Lucky_Fighters
                     SetAndPlayAnimation("Running");
             }
         }
+
+        private void Interact()
+        {
+            foreach (var key in Map.Interactives.Keys)
+            {
+                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, 96, 96);
+
+                if (Hitbox.Intersects(interactiveHitbox))
+                {
+                    Map.Interactives[key].ApplyEffect(this);
+                    var _ = new Task(1, () => { Map.Interactives.Remove(key); });
+                }
+            }
+        }
+
 
         public override void Update(GameTime gameTime)
         {
@@ -517,12 +557,6 @@ namespace Lucky_Fighters
 
             if (Position.Y == previousPosition.Y || IsOnGround)
                 Velocity.Y = 0;
-
-            // flip the sprite based on the direction the player is inputting
-            if (movement < 0)
-                flip = SpriteEffects.FlipHorizontally;
-            else if (movement > 0)
-                flip = SpriteEffects.None;
         }
 
         private void HandleCollisions()
@@ -587,15 +621,32 @@ namespace Lucky_Fighters
             previousBottom = bounds.Bottom;
         }
 
-        private Color GetColor()
-		{
+        public Color GetColor()
+		    {
             return Game1.DefaultColors[teamId];
-		}
+        }
 
-        public virtual void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+        public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle,
-                Color.Lerp(Color.White, GetColor(), .8f), 0f, Origin, flip, 0f);
+            Color playerColor = Color.Lerp(Color.White, GetColor(), .8f);
+            if (IsDodging)
+                playerColor = Color.Lerp(playerColor, Color.Transparent, .8f);
+            spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, playerColor, 0f, Origin, flip, 0f);
+
+            if (IsShielded)
+            {
+                spriteBatch.Draw(
+                    shieldBubble,
+                    new Rectangle
+                    (
+                        Rectangle.X - FrameWidth / 2,
+                        Rectangle.Y - FrameHeight / 2,
+                        Rectangle.Width,
+                        Rectangle.Height
+                    ),
+                    Color.White);
+            }
+
             DrawHealthBar(spriteBatch);
             DrawNameTag(spriteBatch);
         }
@@ -644,11 +695,12 @@ namespace Lucky_Fighters
 
             spriteBatch.Draw(blank, healthBar, Color.Lime);
             spriteBatch.Draw(blank, shieldBar, new Color(66, 182, 245));
-            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X + barPadding, background.Y + barPadding), Color.White);
+            spriteBatch.DrawString(font, $"{lives}", new Vector2(background.X + barPadding, background.Y + barPadding),
+                Color.White);
         }
 
         public void DrawNameTag(SpriteBatch spriteBatch)
-		{
+        {
             Rectangle hitbox = Hitbox;
             string text = "P" + ((int)playerIndex + 1);
             Vector2 textBounds = boldFont.MeasureString(text);

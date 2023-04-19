@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,7 +17,8 @@ namespace Lucky_Fighters
         public List<Rectangle> TileDefinitions;
 
         SpriteFont font;
-
+        
+        public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
 
         Player[] players;
         string[] fighters;
@@ -27,6 +29,11 @@ namespace Lucky_Fighters
         // holds the starting point for the level for each player
         private Vector2[] starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
+
+        // contains AnimatedSprites other than the player (e.g. arrows, tundra breeze)
+        List<AnimatedSprite> otherSprites;
+
+        SoundEffectInstance backgroundMusic;
 
         public ContentManager Content { get; }
 
@@ -59,11 +66,16 @@ namespace Lucky_Fighters
             tileSheets = new Dictionary<string, Texture2D>();
             tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
-
+            
+            //TODO: Make 1 sprite sheet for interactives
+            tileSheets.Add("Flower", Content.Load<Texture2D>("Interactives/Flower"));
+            tileSheets.Add("Shield", Content.Load<Texture2D>("Interactives/Shield"));
+            
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
             this.teams = teams;
+            otherSprites = new List<AnimatedSprite>();
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -83,6 +95,8 @@ namespace Lucky_Fighters
         public override void LoadContent()
         {
             font = this.Content.Load<SpriteFont>("Big");
+            backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.Play();
         }
 
         private void LoadTiles(string path)
@@ -167,6 +181,12 @@ namespace Lucky_Fighters
                 case '4':
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
+                case 'f':
+                    return LoadInteractiveTile(_x, _y, _tileType);
+                
+                case 's':
+                    return LoadInteractiveTile(_x, _y, _tileType);
+
                 // Unknown tile type character
                 default:
                     throw new NotSupportedException(String.Format(
@@ -192,20 +212,20 @@ namespace Lucky_Fighters
                     players[(int)index] = new SwordFighter(this, start, index, teams[(int)index]);
 
                     break;
+                case "archer":
+                    players[(int)index] = new Archer(this, start, index, (int)index);
+                    break;
                 /*
-            case "archer":
-                players[(int)index] = new Archer(this, start, index, 0);
-                break;
-            case "ninja":
-                players[(int)index] = new Ninja(this, start, index, 0);
-                break;
-            case "wizard":
-                players[(int)index] = new Wizard(this, start, index, 0);
-                break;
-            case "muscleman":
-                players[(int)index] = new Muscleman(this, start, index, 0);
-                break;
-            */
+                case "ninja":
+                    players[(int)index] = new Ninja(this, start, index, 0);
+                    break;
+                case "wizard":
+                    players[(int)index] = new Wizard(this, start, index, 0);
+                    break;
+                case "muscleman":
+                    players[(int)index] = new Muscleman(this, start, index, 0);
+                    break;
+                */
             }
 
             // lives[(int)index] = 3;
@@ -226,6 +246,28 @@ namespace Lucky_Fighters
             }
 
             return new Tile(_tileSheetName, index, TileCollision.Passable);
+        }
+
+        private Interactive LoadInteractiveTile(int x, int y, char type)
+        {
+            switch (type)
+            {
+                case 'f':
+                {
+                    var flowerTile = new Flower();
+                    Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
+                    return flowerTile;
+                }
+                case 's':
+                {
+                    var shieldTile = new Shield();
+                    Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
+                    return shieldTile;
+                }
+                    
+            }
+
+            return new Flower();
         }
 
         public TileCollision GetCollision(int _x, int _y)
@@ -261,11 +303,21 @@ namespace Lucky_Fighters
             return touchingPlayers;
         }
 
+        public void AddSprite(AnimatedSprite sprite)
+        {
+            otherSprites.Add(sprite);
+        }
+
         public override void Update(GameTime _gameTime)
         {
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Update(_gameTime);
+            }
+            otherSprites.RemoveAll(s => s.ShouldRemove);
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
@@ -281,8 +333,10 @@ namespace Lucky_Fighters
                         winner = player;
                     }
                 }
+
                 x++;
             }
+
             if (!multipleAlive)
                 ready = true;
         }
@@ -304,9 +358,13 @@ namespace Lucky_Fighters
             DrawTiles(spriteBatch);
             foreach (Player player in players)
             {
-				// if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
-				if (player.lives > 0 || !player.IsCompletelyDead)
-					player.Draw(spriteBatch, gameTime);
+                // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+                if (player.lives > 0 || !player.IsCompletelyDead)
+                    player.Draw(spriteBatch, gameTime);
+            }
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Draw(spriteBatch, gameTime);
             }
             if (paused)
             {
@@ -322,15 +380,26 @@ namespace Lucky_Fighters
                 for (int x = 0; x < Width; ++x)
                 {
                     // If there is a visible tile in that position
-                    if (tileSheets.ContainsKey(tiles[x, y].TileSheetName))
+                    if (!tileSheets.TryGetValue(tiles[x, y].TileSheetName, out var tileSheet)) continue;
+
+
+                    // Draw it in screen space.
+                    var position = new Vector2(x, y) * Tile.Size;
+
+
+                    if (Interactives.TryGetValue(position, out var interactive))
                     {
-                        // Draw it in screen space.
-                        Vector2 position = new Vector2(x, y) * Tile.Size;
-                        spriteBatch.Draw(tileSheets[tiles[x, y].TileSheetName],
-                            position,
-                            TileSourceRecs[tiles[x, y].TileSheetIndex],
-                            Color.White);
+                        if (!interactive.IsEnabled) continue;
                     }
+
+
+                    spriteBatch.Draw
+                    (
+                        tileSheet,
+                        position,
+                        TileSourceRecs[tiles[x, y].TileSheetIndex],
+                        Color.White
+                    );
                 }
             }
         }
