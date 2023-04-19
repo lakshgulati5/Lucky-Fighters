@@ -15,6 +15,12 @@ namespace Lucky_Fighters
             Backward
         }
 
+        public enum Mode
+        {
+            Solo,
+            Team
+        }
+
         public abstract void LoadContent();
         public abstract void Update(GameTime gameTime);
         public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);

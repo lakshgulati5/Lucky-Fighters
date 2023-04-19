@@ -97,12 +97,14 @@ namespace Lucky_Fighters
         public bool IsOnGround { get; private set; }
         float previousBottom;
 
+        bool paused;
+
         /// <summary>
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
         public float DisabledTime;
 
-        public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0;
+        public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0 && !Map.paused;
 
         List<Task> tasks;
 
@@ -343,6 +345,15 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
+            if (Map.paused)
+            {
+                if (Map.pausedBy == playerIndex)
+                {
+                    if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                        Map.paused = false;
+                }
+            }
+
             KeyboardState kb = Keyboard.GetState();
             movement = gamePad.ThumbSticks.Left.X;
             if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
@@ -406,6 +417,12 @@ namespace Lucky_Fighters
                 }
                 sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
+
+                if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                {
+                    Map.paused = true;
+                    Map.pausedBy = playerIndex;
+                }
             }
             else
             {
@@ -481,7 +498,8 @@ namespace Lucky_Fighters
                 dodgingCooldown = Math.Max(dodgingCooldown - elapsed, 0f);
                 dodgingTime = Math.Max(dodgingTime - elapsed, 0f);
                 GetInput();
-                DoPhysics(elapsed);
+                if (!Map.paused)
+                    DoPhysics(elapsed);
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
             }

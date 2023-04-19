@@ -61,6 +61,17 @@ namespace Lucky_Fighters
 
         public int Num { get { return num; } }
 
+        public Mode getMode 
+        { 
+            get 
+            { 
+                if (soloSelected) 
+                    return Mode.Solo; 
+                else 
+                    return Mode.Team;
+            }
+        }
+
         public ContentManager Content { get; }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {

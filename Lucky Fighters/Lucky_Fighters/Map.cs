@@ -16,9 +16,13 @@ namespace Lucky_Fighters
         private Dictionary<string, Texture2D> tileSheets;
         public List<Rectangle> TileDefinitions;
 
+        SpriteFont font;
+        
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
+
         Player[] players;
         string[] fighters;
+        int[] teams;
         bool ready;
         public Player winner;
 
@@ -40,6 +44,9 @@ namespace Lucky_Fighters
 
         private Random random = new Random(1337);
 
+        public bool paused;
+        public PlayerIndex pausedBy;
+
         public int Width
         {
             get { return tiles.GetLength(0); }
@@ -50,7 +57,7 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] fighters)
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams)
         {
             // Create a new content manager to load content used just by this level.
             Content = new ContentManager(_serviceProvider, "Content");
@@ -67,6 +74,7 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
+            this.teams = teams;
             otherSprites = new List<AnimatedSprite>();
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
@@ -86,6 +94,7 @@ namespace Lucky_Fighters
 
         public override void LoadContent()
         {
+            font = this.Content.Load<SpriteFont>("Big");
             backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
             backgroundMusic.Play();
         }
@@ -200,7 +209,7 @@ namespace Lucky_Fighters
             switch (fighters[(int)index])
             {
                 case "swordfighter":
-                    players[(int)index] = new SwordFighter(this, start, index, (int)index);
+                    players[(int)index] = new SwordFighter(this, start, index, teams[(int)index]);
 
                     break;
                 case "archer":
@@ -356,6 +365,10 @@ namespace Lucky_Fighters
             foreach (AnimatedSprite sprite in otherSprites)
             {
                 sprite.Draw(spriteBatch, gameTime);
+            }
+            if (paused)
+            {
+                spriteBatch.DrawString(font, "Paused by Player " + pausedBy, new Vector2(300, 250), Color.White);
             }
         }
 
