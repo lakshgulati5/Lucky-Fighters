@@ -14,16 +14,16 @@ namespace Lucky_Fighters
 {
     class SwordFighter : Player
     {
-        private const float BasicAttackCooldown = .25f;
-        private const float BasicAttackForeswing = .15f;
-        private const float BasicAttackDamage = 8f;
+        const float BasicAttackCooldown = .25f;
+        const float BasicAttackForeswing = .15f;
+        const float BasicAttackDamage = 8f;
 
         Rectangle attackRectangle;
 
-        private const float SpecialAttackCooldown = 2f;
-        private const float SpecialAttackDamage = 25f;
-        private const float SpecialAttackForeswing = .3f;
-        private const float SpecialAttackBackswing = .3f;
+        const float SpecialAttackCooldown = 2f;
+        const float SpecialAttackDamage = 25f;
+        const float SpecialAttackForeswing = .3f;
+        const float SpecialAttackBackswing = .3f;
 
 
 		public SwordFighter(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "swordfightersheet", playerIndex, teamId)

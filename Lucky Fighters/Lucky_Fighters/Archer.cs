@@ -14,14 +14,18 @@ namespace Lucky_Fighters
 {
     class Archer : Player
     {
-        private const float BasicAttackCooldown = .8f;
-        private const float BasicAttackForeswing = .55f;
-        private const float BasicAttackDamage = 15f;
-        private const float BasicAttackBackswing = .1f;
+        const float BasicAttackCooldown = .8f;
+        const float BasicAttackForeswing = .55f;
+        const float BasicAttackDamage = 15f;
+        const float BasicAttackBackswing = .1f;
+        const double BasicAttackAngle = Math.PI / 10;
+
+        Texture2D arrowTex;
 
         public Archer(Map map, Vector2 start, PlayerIndex playerIndex, int teamId) : base(map, start, 1f, 96, 128, 5, "archersheet", playerIndex, teamId)
         {
             attacking = false;
+            arrowTex = map.Content.Load<Texture2D>("Fighters/archer_arrow");
             SpriteAnimations.Add("Idle", new Animation(new int[] { 0, 1 }, 4, true));
             SpriteAnimations.Add("Running", new Animation(new int[] { 2, 3, 4, 5 }, 14, true));
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 2, 3, 4, 5 }, 18, true));
@@ -38,7 +42,8 @@ namespace Lucky_Fighters
 
             AddTask(new Task(BasicAttackForeswing, () =>
             {
-
+                float direction = flip == SpriteEffects.FlipHorizontally ? -1 : 1;
+                Map.AddSprite(new Arrow(Map, arrowTex, Position + new Vector2(30f * direction, -4f), new Vector2((float)Math.Cos(BasicAttackAngle) * direction, (float)-Math.Sin(BasicAttackAngle)) * 1600f, .2f, this, BasicAttackDamage));
             })
             .Then(BasicAttackBackswing, () =>
             {

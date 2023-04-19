@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-	class AnimatedSprite
+	abstract class AnimatedSprite
 	{
 		/// <summary>
 		/// Stores a key-value pair of animation names to their Animation
@@ -38,6 +38,8 @@ namespace Lucky_Fighters
 		}
 
 		public Vector2 Origin => new Vector2(FrameWidth, FrameHeight) / 2f;
+
+		public virtual bool ShouldRemove => false;
 
 		public AnimatedSprite(int frameWidth, int frameHeight, int framesPerRow)
 		{
@@ -68,5 +70,7 @@ namespace Lucky_Fighters
 				SetAndPlayAnimation(animationName);
 			}
 		}
+
+		public abstract void Draw(SpriteBatch spriteBatch, GameTime gameTime);
 	}
 }

@@ -26,6 +26,9 @@ namespace Lucky_Fighters
         private Vector2[] starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
 
+        // contains AnimatedSprites other than the player (e.g. arrows, tundra breeze)
+        List<AnimatedSprite> otherSprites;
+
         SoundEffectInstance backgroundMusic;
 
         public ContentManager Content { get; }
@@ -60,6 +63,7 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
+            otherSprites = new List<AnimatedSprite>();
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -74,13 +78,12 @@ namespace Lucky_Fighters
             }
 
             LoadTiles(path);
-
-            backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
-            backgroundMusic.Play();
         }
 
         public override void LoadContent()
         {
+            backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.Play();
         }
 
         private void LoadTiles(string path)
@@ -259,11 +262,21 @@ namespace Lucky_Fighters
             return touchingPlayers;
         }
 
+        public void AddSprite(AnimatedSprite sprite)
+        {
+            otherSprites.Add(sprite);
+        }
+
         public override void Update(GameTime _gameTime)
         {
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Update(_gameTime);
+            }
+            otherSprites.RemoveAll(s => s.ShouldRemove);
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
@@ -305,6 +318,10 @@ namespace Lucky_Fighters
 				// if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
 				if (player.lives > 0 || !player.IsCompletelyDead)
 					player.Draw(spriteBatch, gameTime);
+            }
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Draw(spriteBatch, gameTime);
             }
         }
 
