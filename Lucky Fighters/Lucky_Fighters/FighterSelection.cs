@@ -11,6 +11,7 @@ namespace Lucky_Fighters
 {
     class FighterSelection : Screen
     {
+        string[] teamColorStrings = new string[] { "Blue", "Red", "Green", "Yellow" };
         int timer;
         Color[] alt;
         int numOfPlayers;
@@ -33,11 +34,16 @@ namespace Lucky_Fighters
         GamePadState[] gp;
         GamePadState[] oldGP;
         public bool started;
+        Mode mode;
+        Color[] teamOptions;
+        int[] selectedTeam;
         public Direction direction { get; private set; }
 
         public ContentManager Content { get; }
 
-        public FighterSelection (IServiceProvider _serviceProvider, int sw, int sh, int nOfPlayers)
+        public int[] SelectedTeams { get { return selectedTeam; } }
+
+        public FighterSelection (IServiceProvider _serviceProvider, int sw, int sh, int nOfPlayers, Mode mode)
         {
             timer = 0;
             numOfPlayers = nOfPlayers;
@@ -79,6 +85,13 @@ namespace Lucky_Fighters
                 playerFourOptions[x] = new Rectangle(fighters[x].X + displacement * 3, fighters[x].Bottom - displacement, displacement, displacement);
             }
             started = false;
+            this.mode = mode;
+            teamOptions = new Color[] { Game1.DefaultColors[0], Game1.DefaultColors[1], Game1.DefaultColors[2], Game1.DefaultColors[3] };
+            selectedTeam = new int[numOfPlayers];
+            for (int x = 0; x < numOfPlayers; x++)
+            {
+                selectedTeam[x] = x;
+            }
         }
 
         public override void LoadContent()
@@ -125,33 +138,36 @@ namespace Lucky_Fighters
                 {
                     //select by dpad
                     if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
-                    {
                         selections[x]++;
-                        if (selections[x] >= fighters.Length)
-                            selections[x] = 0;
-                    }
                     if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
-                    {
                         selections[x]--;
-                        if (selections[x] < 0)
-                            selections[x] = fighters.Length - 1;
-                    }
 
                     //select by left thumbstick
                     if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
-                    {
                         selections[x]++;
-                        if (selections[x] >= fighters.Length)
-                            selections[x] = 0;
-                    }
                     if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
-                    {
                         selections[x]--;
-                        if (selections[x] < 0)
-                            selections[x] = fighters.Length - 1;
-                    }
+
+                    //keep in bounds
+                    if (selections[x] >= fighters.Length)
+                        selections[x] = 0;
+                    if (selections[x] < 0)
+                        selections[x] = fighters.Length - 1;
+
                     selectedFighters[x] = fighterNames[selections[x]];
-                    
+
+                    //change team
+                    if (gp[x].Buttons.RightShoulder == ButtonState.Pressed && !(oldGP[x].Buttons.RightShoulder == ButtonState.Pressed))
+                        selectedTeam[x]++;
+                    if (gp[x].Buttons.LeftShoulder == ButtonState.Pressed && !(oldGP[x].Buttons.LeftShoulder == ButtonState.Pressed))
+                        selectedTeam[x]--;
+
+                    //keep in bounds
+                    if (selectedTeam[x] < 0)
+                        selectedTeam[x] = 3;
+                    if (selectedTeam[x] >= 4)
+                        selectedTeam[x] = 0;
+
                     //declare that the player is ready
                     if (gp[x].IsButtonDown(Buttons.A))
                     {
@@ -184,9 +200,28 @@ namespace Lucky_Fighters
 
         private bool ReadyToStart()
         {
+            //players all ready
             foreach (bool r in ready)
             {
                 if (!r)
+                    return false;
+            }
+
+            //valid teams
+            if (mode == Mode.Team) {
+                bool[] selected = new bool[4];
+                foreach (int selection in selectedTeam)
+                {
+
+                    selected[selection] = true;
+                }
+                int count = 0;
+                foreach (bool s in selected)
+                {
+                    if (s)
+                        count++;
+                }
+                if (count < 2)
                     return false;
             }
             return true;
@@ -194,15 +229,30 @@ namespace Lucky_Fighters
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
+            //draw cards
             for (int x = 0; x < players.Length; x++)
             {
                 if (ready[x])
                     spriteBatch.Draw(blank, borders[x], Color.White);
-                spriteBatch.Draw(blank, players[x], Game1.DefaultColors[x]);
-                if (ready[x])
-                    spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x] + "\nReady", new Vector2(players[x].X + 10, players[x].Y + 10), Color.White);
-                else
-                    spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x], new Vector2(players[x].X + 10, players[x].Y + 10), Color.LightGray);
+                if (mode == Mode.Solo)
+                    spriteBatch.Draw(blank, players[x], Game1.DefaultColors[x]);
+                else 
+                    spriteBatch.Draw(blank, players[x], teamOptions[selectedTeam[x]]);
+                if (mode == Mode.Solo)
+                {
+                    if (ready[x])
+                        spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x] + "\nReady", new Vector2(players[x].X + 10, players[x].Y + 10), Color.White);
+                    else
+                        spriteBatch.DrawString(font, "Player " + (x + 1) + "\n" + selectedFighters[x], new Vector2(players[x].X + 10, players[x].Y + 10), Color.LightGray);
+                }
+                else //team mode
+                {
+                    string c = teamColorStrings[selectedTeam[x]];
+                    if (ready[x])
+                        spriteBatch.DrawString(font, "Player " + (x + 1) + "\n[LB] " + c + " Team [RB]\n" + selectedFighters[x] + "\nReady", new Vector2(players[x].X + 10, players[x].Y + 10), Color.White);
+                    else
+                        spriteBatch.DrawString(font, "Player " + (x + 1) + "\n[LB] " + c + " Team [RB]\n" + selectedFighters[x], new Vector2(players[x].X + 10, players[x].Y + 10), Color.LightGray);
+                }
             }
             for (int x = 0; x < fighters.Length; x++)
             {

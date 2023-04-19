@@ -93,6 +93,8 @@ namespace Lucky_Fighters
         public bool IsOnGround { get; private set; }
         float previousBottom;
 
+        bool paused;
+
         /// <summary>
         /// This will prevent the player from sending inputs due to the player being hit
         /// </summary>
@@ -342,7 +344,15 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
-            if (CanMove)
+            if (Map.paused)
+            {
+                if (Map.pausedBy == playerIndex)
+                {
+                    if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                        Map.paused = false;
+                }
+            }
+            else if (CanMove)
             {
                 movement = gamePad.ThumbSticks.Left.X;
                 if (Math.Abs(movement) < .1f)
@@ -385,6 +395,12 @@ namespace Lucky_Fighters
 
                 sprinting = gamePad.Triggers.Left >= TriggerTolerance;
                 ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
+
+                if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                {
+                    Map.paused = true;
+                    Map.pausedBy = playerIndex;
+                }
             }
             else
             {
@@ -442,7 +458,8 @@ namespace Lucky_Fighters
                 dodgingCooldown = Math.Max(dodgingCooldown - elapsed, 0f);
                 dodgingTime = Math.Max(dodgingTime - elapsed, 0f);
                 GetInput();
-                DoPhysics(elapsed);
+                if (!Map.paused)
+                    DoPhysics(elapsed);
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
             }

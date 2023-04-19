@@ -15,9 +15,12 @@ namespace Lucky_Fighters
         private Dictionary<string, Texture2D> tileSheets;
         public List<Rectangle> TileDefinitions;
 
+        SpriteFont font;
+
 
         Player[] players;
         string[] fighters;
+        int[] teams;
         bool ready;
         public Player winner;
 
@@ -34,6 +37,9 @@ namespace Lucky_Fighters
 
         private Random random = new Random(1337);
 
+        public bool paused;
+        public PlayerIndex pausedBy;
+
         public int Width
         {
             get { return tiles.GetLength(0); }
@@ -44,7 +50,7 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] fighters)
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams)
         {
             // Create a new content manager to load content used just by this level.
             Content = new ContentManager(_serviceProvider, "Content");
@@ -57,6 +63,7 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
+            this.teams = teams;
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -75,6 +82,7 @@ namespace Lucky_Fighters
 
         public override void LoadContent()
         {
+            font = this.Content.Load<SpriteFont>("Big");
         }
 
         private void LoadTiles(string path)
@@ -181,7 +189,7 @@ namespace Lucky_Fighters
             switch (fighters[(int)index])
             {
                 case "swordfighter":
-                    players[(int)index] = new SwordFighter(this, start, index, (int)index);
+                    players[(int)index] = new SwordFighter(this, start, index, teams[(int)index]);
 
                     break;
                 /*
@@ -299,6 +307,10 @@ namespace Lucky_Fighters
 				// if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
 				if (player.lives > 0 || !player.IsCompletelyDead)
 					player.Draw(spriteBatch, gameTime);
+            }
+            if (paused)
+            {
+                spriteBatch.DrawString(font, "Paused by Player " + pausedBy, new Vector2(300, 250), Color.White);
             }
         }
 
