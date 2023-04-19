@@ -53,8 +53,11 @@ namespace Lucky_Fighters
             tileSheets = new Dictionary<string, Texture2D>();
             tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
+            
+            //TODO: Make 1 sprite sheet for interactives
             tileSheets.Add("Flower", Content.Load<Texture2D>("Interactives/Flower"));
-
+            tileSheets.Add("Shield", Content.Load<Texture2D>("Interactives/Shield"));
+            
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
@@ -161,7 +164,10 @@ namespace Lucky_Fighters
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
                 case 'f':
-                    return LoadInteractiveTile(_x, _y, 'f');
+                    return LoadInteractiveTile(_x, _y, _tileType);
+                
+                case 's':
+                    return LoadInteractiveTile(_x, _y, _tileType);
 
                 // Unknown tile type character
                 default:
@@ -234,6 +240,13 @@ namespace Lucky_Fighters
                     Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
                     return flowerTile;
                 }
+                case 's':
+                {
+                    var shieldTile = new Shield();
+                    Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
+                    return shieldTile;
+                }
+                    
             }
 
             return new Flower();

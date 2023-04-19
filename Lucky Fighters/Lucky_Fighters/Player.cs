@@ -61,6 +61,7 @@ namespace Lucky_Fighters
         public float Health { get; set; }
         public float AdditionalHealth { get; private set; }
 
+        public bool IsShielded { get; set; }
 
         public bool IsDead => Health <= 0;
 
@@ -89,6 +90,8 @@ namespace Lucky_Fighters
 
         private SpriteFont font;
         private SpriteFont boldFont;
+
+        private Texture2D shieldBubble;
 
         public bool IsOnGround { get; private set; }
         float previousBottom;
@@ -121,10 +124,7 @@ namespace Lucky_Fighters
         /// <summary>
         /// The rectangle to be used for drawing
         /// </summary>
-        Rectangle Rectangle
-        {
-            get { return new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight); }
-        }
+        Rectangle Rectangle => new Rectangle((int)Position.X, (int)Position.Y, FrameWidth, FrameHeight);
 
         SpriteEffects flip;
 
@@ -146,6 +146,8 @@ namespace Lucky_Fighters
             boldFont = Map.Content.Load<SpriteFont>("Bold");
 
             tasks = new List<Task>();
+
+            shieldBubble = Map.Content.Load<Texture2D>("Interactives/ShieldBubble");
 
             // add more to this list as more functionality is added
             // fighter subclasses should implement the following animations: Idle, Running
@@ -208,7 +210,7 @@ namespace Lucky_Fighters
             if (damage == 0)
                 return 0f;
 
-            if (IsDodging)
+            if (IsDodging || IsShielded)
                 return 0f;
 
             if (IsBlocking)
@@ -236,6 +238,7 @@ namespace Lucky_Fighters
 
             return damage;
         }
+
 
         /// <summary>
         /// Get an adjusted rectangle for the given hitbox (the hitbox x = 0 is at the player's center x, y = 0 is at the feet)
@@ -343,6 +346,7 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             GamePadState gamePad = GamePad.GetState(playerIndex);
+            var keyboard = Keyboard.GetState(playerIndex);
             if (CanMove)
             {
                 movement = gamePad.ThumbSticks.Left.X;
@@ -442,10 +446,7 @@ namespace Lucky_Fighters
                 if (Hitbox.Intersects(interactiveHitbox))
                 {
                     Map.Interactives[key].ApplyEffect(this);
-                    var _ = new Task(1, () =>
-                    {
-                        Map.Interactives.Remove(key);
-                    });
+                    var _ = new Task(1, () => { Map.Interactives.Remove(key); });
                 }
             }
         }
@@ -604,6 +605,21 @@ namespace Lucky_Fighters
         {
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle,
                 Color.Lerp(Color.White, GetColor(), .8f), 0f, Origin, flip, 0f);
+
+            if (IsShielded)
+            {
+                spriteBatch.Draw(
+                    shieldBubble,
+                    new Rectangle
+                    (
+                        Rectangle.X - FrameWidth / 2,
+                        Rectangle.Y - FrameHeight / 2,
+                        Rectangle.Width,
+                        Rectangle.Height
+                    ),
+                    Color.White);
+            }
+
             DrawHealthBar(spriteBatch);
             DrawNameTag(spriteBatch);
         }
