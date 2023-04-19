@@ -74,6 +74,8 @@
     <Compile Include="AnimatedSprite.cs" />
     <Compile Include="Animation.cs" />
     <Compile Include="FighterSelection.cs" />
+    <Compile Include="Flower.cs" />
+    <Compile Include="Interactive.cs" />
     <Compile Include="MapSelection.cs" />
     <Compile Include="NumberOfPlayerSelection.cs" />
     <Compile Include="Player.cs" />
@@ -84,6 +86,7 @@
     <Compile Include="ClassExtensions.cs" />
     <Compile Include="Results.cs" />
     <Compile Include="Screen.cs" />
+    <Compile Include="Shield.cs" />
     <Compile Include="SwordFighter.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="Tile.cs" />

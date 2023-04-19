@@ -15,7 +15,7 @@ namespace Lucky_Fighters
         private Dictionary<string, Texture2D> tileSheets;
         public List<Rectangle> TileDefinitions;
 
-
+        public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
         Player[] players;
         string[] fighters;
         bool ready;
@@ -53,7 +53,11 @@ namespace Lucky_Fighters
             tileSheets = new Dictionary<string, Texture2D>();
             tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
-
+            
+            //TODO: Make 1 sprite sheet for interactives
+            tileSheets.Add("Flower", Content.Load<Texture2D>("Interactives/Flower"));
+            tileSheets.Add("Shield", Content.Load<Texture2D>("Interactives/Shield"));
+            
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
@@ -159,6 +163,12 @@ namespace Lucky_Fighters
                 case '4':
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
+                case 'f':
+                    return LoadInteractiveTile(_x, _y, _tileType);
+                
+                case 's':
+                    return LoadInteractiveTile(_x, _y, _tileType);
+
                 // Unknown tile type character
                 default:
                     throw new NotSupportedException(String.Format(
@@ -220,6 +230,28 @@ namespace Lucky_Fighters
             return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
+        private Interactive LoadInteractiveTile(int x, int y, char type)
+        {
+            switch (type)
+            {
+                case 'f':
+                {
+                    var flowerTile = new Flower();
+                    Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
+                    return flowerTile;
+                }
+                case 's':
+                {
+                    var shieldTile = new Shield();
+                    Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
+                    return shieldTile;
+                }
+                    
+            }
+
+            return new Flower();
+        }
+
         public TileCollision GetCollision(int _x, int _y)
         {
             if (_x < 0 || _x >= Width)
@@ -258,6 +290,9 @@ namespace Lucky_Fighters
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
+            
+            
+            
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
@@ -273,8 +308,10 @@ namespace Lucky_Fighters
                         winner = player;
                     }
                 }
+
                 x++;
             }
+
             if (!multipleAlive)
                 ready = true;
         }
@@ -296,9 +333,9 @@ namespace Lucky_Fighters
             DrawTiles(spriteBatch);
             foreach (Player player in players)
             {
-				// if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
-				if (player.lives > 0 || !player.IsCompletelyDead)
-					player.Draw(spriteBatch, gameTime);
+                // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
+                if (player.lives > 0 || !player.IsCompletelyDead)
+                    player.Draw(spriteBatch, gameTime);
             }
         }
 
@@ -310,15 +347,26 @@ namespace Lucky_Fighters
                 for (int x = 0; x < Width; ++x)
                 {
                     // If there is a visible tile in that position
-                    if (tileSheets.ContainsKey(tiles[x, y].TileSheetName))
+                    if (!tileSheets.TryGetValue(tiles[x, y].TileSheetName, out var tileSheet)) continue;
+
+
+                    // Draw it in screen space.
+                    var position = new Vector2(x, y) * Tile.Size;
+
+
+                    if (Interactives.TryGetValue(position, out var interactive))
                     {
-                        // Draw it in screen space.
-                        Vector2 position = new Vector2(x, y) * Tile.Size;
-                        spriteBatch.Draw(tileSheets[tiles[x, y].TileSheetName],
-                            position,
-                            TileSourceRecs[tiles[x, y].TileSheetIndex],
-                            Color.White);
+                        if (!interactive.IsEnabled) continue;
                     }
+
+
+                    spriteBatch.Draw
+                    (
+                        tileSheet,
+                        position,
+                        TileSourceRecs[tiles[x, y].TileSheetIndex],
+                        Color.White
+                    );
                 }
             }
         }
