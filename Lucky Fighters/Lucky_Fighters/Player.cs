@@ -443,7 +443,11 @@ namespace Lucky_Fighters
             {
                 var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width);
 
-                if (Hitbox.Intersects(interactiveHitbox)) Map.Interactives[key].ApplyEffect(this);
+                if (Hitbox.Intersects(interactiveHitbox))
+                {
+                    Map.Interactives[key].ApplyEffect(this);
+                    AddTask(new Task(1, () => { Map.Interactives.Remove(key); }));
+                }
             }
         }
 
