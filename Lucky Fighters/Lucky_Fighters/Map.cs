@@ -87,6 +87,7 @@ namespace Lucky_Fighters
         public override void LoadContent()
         {
             backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.IsLooped = true;
             backgroundMusic.Play();
         }
 
