@@ -1,8 +1,8 @@
 ﻿namespace Lucky_Fighters
 {
-    public class Shield : Interactive
+    public class Wings : Interactive
     {
-        public Shield() : base("Shield", 0, false)
+        public Wings() : base("Wings", 0, false)
         {
         }
 
@@ -13,10 +13,10 @@
             player.AddTask(
                 new Task(0, () =>
                     {
-                        player.IsShielded = true;
+                        player.HasWings = true;
                         IsEnabled = false;
                     }
-                ).Then(5, () => { player.IsShielded = false; })
+                ).Then(10, () => { player.HasWings = false; })
             );
         }
     }

@@ -12,7 +12,7 @@ namespace Lucky_Fighters
     class Map : Screen, IDisposable
     {
         private Tile[,] tiles;
-        private Dictionary<string, Texture2D> tileSheets;
+        public Dictionary<string, Texture2D> tileSheets { get; }
         public List<Rectangle> TileDefinitions;
 
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
@@ -53,11 +53,12 @@ namespace Lucky_Fighters
             tileSheets = new Dictionary<string, Texture2D>();
             tileSheets.Add("Blocks", Content.Load<Texture2D>("Tiles/Blocks"));
             tileSheets.Add("Platforms", Content.Load<Texture2D>("Tiles/Platforms"));
-            
+
             //TODO: Make 1 sprite sheet for interactives
             tileSheets.Add("Flower", Content.Load<Texture2D>("Interactives/Flower"));
             tileSheets.Add("Shield", Content.Load<Texture2D>("Interactives/Shield"));
-            
+            tileSheets.Add("Wings", Content.Load<Texture2D>("Interactives/Wings"));
+
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
@@ -164,10 +165,10 @@ namespace Lucky_Fighters
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
                 case 'f':
-                    return LoadInteractiveTile(_x, _y, _tileType);
-                
                 case 's':
+                case 'n':
                     return LoadInteractiveTile(_x, _y, _tileType);
+
 
                 // Unknown tile type character
                 default:
@@ -246,7 +247,12 @@ namespace Lucky_Fighters
                     Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
                     return shieldTile;
                 }
-                    
+                case 'n':
+                {
+                    var wingTile = new Wings();
+                    Interactives[new Vector2(x, y) * Tile.Size] = wingTile;
+                    return wingTile;
+                }
             }
 
             return new Flower();
@@ -290,9 +296,8 @@ namespace Lucky_Fighters
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
-            
-            
-            
+
+
             foreach (Player player in players)
             {
                 player.Update(_gameTime);
