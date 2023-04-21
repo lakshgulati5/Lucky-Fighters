@@ -63,7 +63,7 @@ namespace Lucky_Fighters
         public float AdditionalHealth { get; private set; }
 
         public bool IsShielded { get; set; }
-
+        public bool HasWings { get; set; }
         public bool IsDead => Health <= 0;
 
         public bool IsCompletelyDead { get; private set; }
@@ -332,7 +332,7 @@ namespace Lucky_Fighters
         /// </summary>
         private void DoJump()
         {
-            if (IsOnGround)
+            if (IsOnGround || HasWings)
             {
                 Velocity.Y = -JumpPower;
                 SetAndPlayAnimation("Jumping");
@@ -471,7 +471,7 @@ namespace Lucky_Fighters
         {
             foreach (var key in Map.Interactives.Keys)
             {
-                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, 96, 96);
+                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width);
 
                 if (Hitbox.Intersects(interactiveHitbox))
                 {
@@ -485,6 +485,14 @@ namespace Lucky_Fighters
         public override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
+
+            foreach (var key in Map.Interactives.Keys)
+            {
+                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width);
+
+                if (Hitbox.Intersects(interactiveHitbox) && !Map.Interactives[key].RequiresKeypress)
+                    Map.Interactives[key].ApplyEffect(this);
+            }
 
             float elapsed = gameTime.GetElapsedSeconds();
             DisabledTime = Math.Max(DisabledTime - elapsed, 0f);
@@ -628,9 +636,32 @@ namespace Lucky_Fighters
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
+
+            var playerColor = Color.Lerp(Color.White, GetColor(), .8f);
+
+            if (HasWings)
+            {
+                var wingRectangle = new Rectangle
+                (
+                    Rectangle.X - FrameWidth / 2,
+                    Rectangle.Y - FrameHeight / 2 + FrameHeight / 4,
+                    Rectangle.Width,
+                    Rectangle.Height / 2
+                );
+
+
+                spriteBatch.Draw(
+                    Map.tileSheets["Wings"],
+                    wingRectangle,
+                    playerColor
+                );
+            }
+
+
             Color playerColor = Color.Lerp(Color.White, GetColor(), .8f);
             if (IsDodging)
                 playerColor = Color.Lerp(playerColor, Color.Transparent, .8f);
+
             spriteBatch.Draw(spriteSheet, Rectangle, SourceRectangle, playerColor, 0f, Origin, flip, 0f);
 
             if (IsShielded)
@@ -646,6 +677,7 @@ namespace Lucky_Fighters
                     ),
                     Color.White);
             }
+
 
             DrawHealthBar(spriteBatch);
             DrawNameTag(spriteBatch);

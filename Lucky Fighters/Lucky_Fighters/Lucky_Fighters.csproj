@@ -92,6 +92,7 @@
     <Compile Include="SwordFighter.cs" />
     <Compile Include="Task.cs" />
     <Compile Include="Tile.cs" />
+    <Compile Include="Wings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />
