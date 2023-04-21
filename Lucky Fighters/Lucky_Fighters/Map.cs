@@ -96,6 +96,7 @@ namespace Lucky_Fighters
         {
             font = this.Content.Load<SpriteFont>("Big");
             backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.IsLooped = true;
             backgroundMusic.Play();
         }
 
