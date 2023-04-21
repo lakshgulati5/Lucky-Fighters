@@ -97,7 +97,6 @@ namespace Lucky_Fighters
         public bool IsOnGround { get; private set; }
         float previousBottom;
 
-        bool paused;
 
         /// <summary>
         /// This will prevent the player from sending inputs due to the player being hit
@@ -344,90 +343,113 @@ namespace Lucky_Fighters
         /// </summary>
         private void GetInput()
         {
+            KeyboardState kb = Keyboard.GetState();
             GamePadState gamePad = GamePad.GetState(playerIndex);
+            //pause game
             if (Map.paused)
             {
+                //can only be unpaused by the player who paused the game
                 if (Map.pausedBy == playerIndex)
                 {
+                    //resume game
                     if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                    {
                         Map.paused = false;
-                }
-            }
-
-            KeyboardState kb = Keyboard.GetState();
-            movement = gamePad.ThumbSticks.Left.X;
-            if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
-                movement += -1;
-            if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One)
-                movement += 1;
-            if (Math.Abs(movement) < .1f)
-                movement = 0f;
-            else
-                movement = MathHelper.Clamp(movement, -1f, 1f);
-            // flip the sprite based on the direction the player is inputting
-            if (movement < 0)
-                flip = SpriteEffects.FlipHorizontally;
-            else if (movement > 0)
-                flip = SpriteEffects.None;
-            if (CanMove)
-            {
-
-                if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
-                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
-                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
-                {
-                    SendJump();
-                }
-
-                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
-                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W))
-                {
-                    Attack();
-                }
-
-                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
-                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S))
-                {
-                    SpecialAttack();
-                }
-
-                /*
-                if (gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
-                {
-                    // fighter subclasses may not use entire luck bar
-                    Ultimate();
-                }
-                */
-
-                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
-                    oldGamePad.Buttons.RightShoulder == ButtonState.Released)
-                {
-                    Dodge();
-                }
-
-                if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
-                {
-                    Block();
-                }
-
-                if (gamePad.Buttons.LeftStick == ButtonState.Pressed &&
-                    oldGamePad.Buttons.LeftStick == ButtonState.Released)
-                {
-                    Interact();
-                }
-                sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
-                ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
-
-                if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
-                {
-                    Map.paused = true;
-                    Map.pausedBy = playerIndex;
+                        Map.quitting = false;
+                    }
+                    //quit game
+                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
+                    {
+                        Map.InitializeQuit();
+                    }
+                    if (Map.quitting)
+                    {
+                        if (gamePad.Buttons.A == ButtonState.Pressed)
+                            Map.Quit();
+                        else if (gamePad.Buttons.B == ButtonState.Pressed)
+                            Map.CancelQuit();
+                    }
                 }
             }
             else
             {
-                movement = 0f;
+                movement = gamePad.ThumbSticks.Left.X;
+                if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
+                    movement += -1;
+                if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One)
+                    movement += 1;
+                if (Math.Abs(movement) < .1f)
+                    movement = 0f;
+                else
+                    movement = MathHelper.Clamp(movement, -1f, 1f);
+                // flip the sprite based on the direction the player is inputting
+                if (movement < 0)
+                    flip = SpriteEffects.FlipHorizontally;
+                else if (movement > 0)
+                    flip = SpriteEffects.None;
+
+                if (CanMove)
+                {
+
+                    if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
+                        gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
+                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
+                    {
+                        SendJump();
+                    }
+
+                    if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W))
+                    {
+                        Attack();
+                    }
+
+                    if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
+                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S))
+                    {
+                        SpecialAttack();
+                    }
+
+                    /*
+                    if (gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                    {
+                        // fighter subclasses may not use entire luck bar
+                        Ultimate();
+                    }
+                    */
+
+                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                        oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+                    {
+                        Dodge();
+                    }
+
+                    if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
+                    {
+                        Block();
+                    }
+
+                    if (gamePad.Buttons.LeftStick == ButtonState.Pressed &&
+                        oldGamePad.Buttons.LeftStick == ButtonState.Released)
+                    {
+                        Interact();
+                    }
+                    sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
+                    ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
+
+                    //pause only by players that are still in the game
+                    if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                    {
+                        Map.paused = true;
+                        Map.pausedBy = playerIndex;
+                    }
+                }
+                else
+                {
+                    movement = 0f;
+                }
             }
+
 
             oldGamePad = gamePad;
             oldKb = kb;
