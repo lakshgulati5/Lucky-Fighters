@@ -131,7 +131,7 @@ namespace Lucky_Fighters
             if (screen.ReadyForNextScreen() && screen is Map) //go to results
             {
                 Map alt = (Map)screen;
-                SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, alt.winner));
+                SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, alt.winner, alt.end));
             }
             if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
             {

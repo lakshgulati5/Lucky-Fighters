@@ -18,8 +18,9 @@ namespace Lucky_Fighters
         Player winner;
         int numOfPlayers;
         GamePadState[] gp;
+        Map.GameEnd end;
         public ContentManager Content { get; }
-        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Player winner)
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Player winner, Map.GameEnd end)
         {
             Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
@@ -27,10 +28,26 @@ namespace Lucky_Fighters
             this.winner = winner;
             numOfPlayers = num;
             gp = new GamePadState[numOfPlayers];
+            this.end = end;
         }
+
+        //no winner (quit game)
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Map.GameEnd end)
+        {
+            Content = new ContentManager(_serviceProvider, "Content");
+            this.sw = sw;
+            this.sh = sh;
+            numOfPlayers = num;
+            gp = new GamePadState[numOfPlayers];
+            this.end = end;
+        }
+
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(font, "Player " + winner.playerIndex + " wins!\nPress start to continue.", new Vector2(50, 50), Color.White);
+            if (end == Map.GameEnd.Win)
+                spriteBatch.DrawString(font, "Player " + winner.playerIndex + " wins!\nPress start to continue.", new Vector2(50, 50), Color.White);
+            else
+                spriteBatch.DrawString(font, "No contest.\nPress start to continue.", new Vector2(50, 50), Color.White);
         }
 
         public override Color GetColor()

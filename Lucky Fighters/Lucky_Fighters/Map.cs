@@ -25,6 +25,7 @@ namespace Lucky_Fighters
         int[] teams;
         bool ready;
         public Player winner;
+        public bool quitting;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -338,7 +339,10 @@ namespace Lucky_Fighters
             }
 
             if (!multipleAlive)
+            {
                 ready = true;
+                end = GameEnd.Win;
+            }
         }
 
 
@@ -368,7 +372,9 @@ namespace Lucky_Fighters
             }
             if (paused)
             {
-                spriteBatch.DrawString(font, "Paused by Player " + pausedBy, new Vector2(300, 250), Color.White);
+                spriteBatch.DrawString(font, "Paused by Player " + pausedBy + "\nQuit- [LB] + [RB]", new Vector2(300, 200), Color.White);
+                if (quitting)
+                    spriteBatch.DrawString(font, "Quit?\nYes- A\nNo- B", new Vector2(300, 375), Color.White);
             }
         }
 
@@ -408,6 +414,29 @@ namespace Lucky_Fighters
         {
             Content.Unload();
         }
+
+        public void InitializeQuit()
+        {
+            quitting = true;
+        }
+        public void Quit()
+        {
+            ready = true;
+            end = GameEnd.Quit;
+        }
+
+        public void CancelQuit()
+        {
+            quitting = false;
+        }
+
+        // used to store how the game was ended and determine what the result screen displays
+        public enum GameEnd
+        {
+            Quit, Win
+        }
+
+        public GameEnd end { get; private set; }
 
         public override bool ReadyForNextScreen()
         {
