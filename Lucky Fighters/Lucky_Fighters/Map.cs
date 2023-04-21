@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,15 +16,24 @@ namespace Lucky_Fighters
         public Dictionary<string, Texture2D> tileSheets { get; }
         public List<Rectangle> TileDefinitions;
 
+        SpriteFont font;
+        
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
+
         Player[] players;
         string[] fighters;
+        int[] teams;
         bool ready;
         public Player winner;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
         public Dictionary<int, Rectangle> TileSourceRecs;
+
+        // contains AnimatedSprites other than the player (e.g. arrows, tundra breeze)
+        List<AnimatedSprite> otherSprites;
+
+        SoundEffectInstance backgroundMusic;
 
         public ContentManager Content { get; }
 
@@ -33,6 +43,9 @@ namespace Lucky_Fighters
         private const int NumRowsPerSheet = 5;
 
         private Random random = new Random(1337);
+
+        public bool paused;
+        public PlayerIndex pausedBy;
 
         public int Width
         {
@@ -44,7 +57,7 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] fighters)
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams)
         {
             // Create a new content manager to load content used just by this level.
             Content = new ContentManager(_serviceProvider, "Content");
@@ -62,6 +75,8 @@ namespace Lucky_Fighters
             this.fighters = fighters;
             players = new Player[fighters.Length];
             starts = new Vector2[fighters.Length];
+            this.teams = teams;
+            otherSprites = new List<AnimatedSprite>();
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -80,6 +95,10 @@ namespace Lucky_Fighters
 
         public override void LoadContent()
         {
+            font = this.Content.Load<SpriteFont>("Big");
+            backgroundMusic = Content.Load<SoundEffect>("Sound/luckyfighterstheme").CreateInstance();
+            backgroundMusic.IsLooped = true;
+            backgroundMusic.Play();
         }
 
         private void LoadTiles(string path)
@@ -192,23 +211,23 @@ namespace Lucky_Fighters
             switch (fighters[(int)index])
             {
                 case "swordfighter":
-                    players[(int)index] = new SwordFighter(this, start, index, (int)index);
+                    players[(int)index] = new SwordFighter(this, start, index, teams[(int)index]);
 
                     break;
+                case "archer":
+                    players[(int)index] = new Archer(this, start, index, (int)index);
+                    break;
                 /*
-            case "archer":
-                players[(int)index] = new Archer(this, start, index, 0);
-                break;
-            case "ninja":
-                players[(int)index] = new Ninja(this, start, index, 0);
-                break;
-            case "wizard":
-                players[(int)index] = new Wizard(this, start, index, 0);
-                break;
-            case "muscleman":
-                players[(int)index] = new Muscleman(this, start, index, 0);
-                break;
-            */
+                case "ninja":
+                    players[(int)index] = new Ninja(this, start, index, 0);
+                    break;
+                case "wizard":
+                    players[(int)index] = new Wizard(this, start, index, 0);
+                    break;
+                case "muscleman":
+                    players[(int)index] = new Muscleman(this, start, index, 0);
+                    break;
+                */
             }
 
             // lives[(int)index] = 3;
@@ -291,12 +310,22 @@ namespace Lucky_Fighters
             return touchingPlayers;
         }
 
+        public void AddSprite(AnimatedSprite sprite)
+        {
+            otherSprites.Add(sprite);
+        }
+
         public override void Update(GameTime _gameTime)
         {
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
 
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Update(_gameTime);
+            }
+            otherSprites.RemoveAll(s => s.ShouldRemove);
 
             foreach (Player player in players)
             {
@@ -341,6 +370,14 @@ namespace Lucky_Fighters
                 // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
                 if (player.lives > 0 || !player.IsCompletelyDead)
                     player.Draw(spriteBatch, gameTime);
+            }
+            foreach (AnimatedSprite sprite in otherSprites)
+            {
+                sprite.Draw(spriteBatch, gameTime);
+            }
+            if (paused)
+            {
+                spriteBatch.DrawString(font, "Paused by Player " + pausedBy, new Vector2(300, 250), Color.White);
             }
         }
 

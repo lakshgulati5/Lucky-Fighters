@@ -92,6 +92,13 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Sound\luckyfighterstheme.wav">
+      <Name>luckyfighterstheme</Name>
+      <Importer>WavImporter</Importer>
+      <Processor>SoundEffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Interactives\Shield.png">
       <Name>Shield</Name>
       <Importer>TextureImporter</Importer>
@@ -101,6 +108,20 @@
   <ItemGroup>
     <Compile Include="Interactives\Flower.png">
       <Name>Flower</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Fighters\archersheet.png">
+      <Name>archersheet</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Fighters\archer_arrow.png">
+      <Name>archer_arrow</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

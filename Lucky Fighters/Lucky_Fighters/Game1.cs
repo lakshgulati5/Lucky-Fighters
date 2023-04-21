@@ -29,6 +29,8 @@ namespace Lucky_Fighters
         Screen screen;
         int numOfPlayers;
         string[] selectedFighters;
+        Screen.Mode mode;
+        int[] teams;
 
         public Game1()
         {
@@ -64,9 +66,9 @@ namespace Lucky_Fighters
             int sw = graphics.PreferredBackBufferWidth;
             int sh = graphics.PreferredBackBufferHeight;
 			SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
-			// testing
-			//SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "swordfighter", "swordfighter" }));
-		}
+            // testing
+            //SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "archer", "swordfighter" }, new int[] { 0, 1 }));
+        }
 
 		public void SetScreen (Screen screen)
         {
@@ -100,36 +102,38 @@ namespace Lucky_Fighters
 
             if (screen.ReadyForNextScreen())
             {
-                if (screen is NumberOfPlayerSelection)
+                if (screen is NumberOfPlayerSelection) //go to fighter selection
                 {
                     NumberOfPlayerSelection alt = (NumberOfPlayerSelection)screen;
                     numOfPlayers = alt.Num;
-                    SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
+                    mode = alt.getMode;
+                    SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
-                else if (screen is FighterSelection)
+                else if (screen is FighterSelection) //go to map selection
                 {
                     FighterSelection alt = (FighterSelection)screen;
                     selectedFighters = alt.SelectedFighters();
+                    teams = alt.SelectedTeams;
                     if (alt.direction == Screen.Direction.Forward)
                         SetScreen(new MapSelection(Services, GameWidth, GameHeight, numOfPlayers));
                     else
                         SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
                 }
-                else if (screen is MapSelection)
+                else if (screen is MapSelection) //start gameplay
                 {
                     MapSelection alt = (MapSelection)screen;
                     if (alt.direction == Screen.Direction.Forward)
-                        SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters));
+                        SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters, teams));
                     else
-                        SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers));
+                        SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
             }
-            if (screen.ReadyForNextScreen() && screen is Map)
+            if (screen.ReadyForNextScreen() && screen is Map) //go to results
             {
                 Map alt = (Map)screen;
                 SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, alt.winner));
             }
-            if (screen.ReadyForNextScreen() && screen is Results)
+            if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
             {
                 SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
             }

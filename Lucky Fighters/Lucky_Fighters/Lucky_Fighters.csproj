@@ -73,6 +73,8 @@
   <ItemGroup>
     <Compile Include="AnimatedSprite.cs" />
     <Compile Include="Animation.cs" />
+    <Compile Include="Archer.cs" />
+    <Compile Include="Arrow.cs" />
     <Compile Include="FighterSelection.cs" />
     <Compile Include="Flower.cs" />
     <Compile Include="Interactive.cs" />
