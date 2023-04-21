@@ -15,7 +15,7 @@ namespace Lucky_Fighters
     abstract class Player : AnimatedSprite
     {
         // constants
-        const float MoveAcceleration = 2000f;
+        const float MoveAcceleration = 2000f; 
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
         public const float Gravity = 2000f;
@@ -657,8 +657,6 @@ namespace Lucky_Fighters
                 );
             }
 
-
-            Color playerColor = Color.Lerp(Color.White, GetColor(), .8f);
             if (IsDodging)
                 playerColor = Color.Lerp(playerColor, Color.Transparent, .8f);
 
