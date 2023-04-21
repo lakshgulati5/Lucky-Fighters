@@ -498,7 +498,7 @@ namespace Lucky_Fighters
                 if (Hitbox.Intersects(interactiveHitbox))
                 {
                     Map.Interactives[key].ApplyEffect(this);
-                    var _ = new Task(1, () => { Map.Interactives.Remove(key); });
+                    AddTask(new Task(1, () => { Map.Interactives.Remove(key); }));
                 }
             }
         }
