@@ -12,12 +12,13 @@ namespace Lucky_Fighters
 {
     class Map : Screen, IDisposable
     {
+        string[] teamColorStrings = new string[] { "Blue", "Red", "Green", "Yellow" };
         private Tile[,] tiles;
         public Dictionary<string, Texture2D> tileSheets { get; }
         public List<Rectangle> TileDefinitions;
 
         SpriteFont font;
-        
+
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
 
         Player[] players;
@@ -26,6 +27,7 @@ namespace Lucky_Fighters
         bool ready;
         public Player winner;
         public bool quitting;
+        Mode mode;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -58,7 +60,13 @@ namespace Lucky_Fighters
             get { return tiles.GetLength(1); }
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams)
+        public string winningTeam
+        {
+            get;
+            private set;
+        }
+
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams, Mode mode)
         {
             // Create a new content manager to load content used just by this level.
             Content = new ContentManager(_serviceProvider, "Content");
@@ -78,6 +86,7 @@ namespace Lucky_Fighters
             starts = new Vector2[fighters.Length];
             this.teams = teams;
             otherSprites = new List<AnimatedSprite>();
+            this.mode = mode;
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -333,18 +342,42 @@ namespace Lucky_Fighters
                 player.Update(_gameTime);
                 if (player.IsCompletelyDead && player.lives > 0) player.Reset(starts[x]);
                 if (player.IsDead) OnPlayerKilled(x);
-                if (player.lives > 0)
+                if (mode == Mode.Solo)
                 {
-                    if (someoneAlive)
-                        multipleAlive = true;
-                    else
+                    if (player.lives > 0)
                     {
-                        someoneAlive = true;
-                        winner = player;
+                        if (someoneAlive)
+                            multipleAlive = true;
+                        else
+                        {
+                            someoneAlive = true;
+                            winner = player;
+                        }
                     }
                 }
-
                 x++;
+            }
+            if (mode == Mode.Team)
+            {
+                int[] amtAlive = new int[4];
+                for (x = 0; x < teams.Length; x++)
+                {
+                    if (teams[x] != -1)
+                        amtAlive[teams[x]]++;
+                }
+                for (x = 0; x < amtAlive.Length; x++)
+                {
+                    if (amtAlive[x] > 0)
+                    {
+                        if (someoneAlive)
+                            multipleAlive = true;
+                        else
+                        {
+                            someoneAlive = true;
+                            winningTeam = teamColorStrings[teams[x]];
+                        }
+                    }
+                }
             }
 
             if (!multipleAlive)
@@ -364,6 +397,8 @@ namespace Lucky_Fighters
             player.OnKilled();
             // lives[index] -= 1;
             player.lives -= 1;
+            if (player.lives < 1)
+                teams[index] = -1;
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

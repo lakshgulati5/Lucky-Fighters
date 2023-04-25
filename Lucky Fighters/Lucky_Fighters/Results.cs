@@ -15,12 +15,14 @@ namespace Lucky_Fighters
         SpriteFont font;
         int sw;
         int sh;
+        Screen.Mode mode;
         Player winner;
+        string winningTeam;
         int numOfPlayers;
         GamePadState[] gp;
         Map.GameEnd end;
         public ContentManager Content { get; }
-        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Player winner, Map.GameEnd end)
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, Player winner, Map.GameEnd end)
         {
             Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
@@ -29,23 +31,31 @@ namespace Lucky_Fighters
             numOfPlayers = num;
             gp = new GamePadState[numOfPlayers];
             this.end = end;
+            this.mode = mode;
         }
 
         //no winner (quit game)
-        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Map.GameEnd end)
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, string winner, Map.GameEnd end)
         {
             Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
             this.sh = sh;
+            winningTeam = winner;
             numOfPlayers = num;
             gp = new GamePadState[numOfPlayers];
             this.end = end;
+            this.mode = mode;
         }
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             if (end == Map.GameEnd.Win)
-                spriteBatch.DrawString(font, "Player " + winner.playerIndex + " wins!\nPress start to continue.", new Vector2(50, 50), Color.White);
+            {
+                if (mode == Mode.Solo)
+                    spriteBatch.DrawString(font, "Player " + winner.playerIndex + " wins!\nPress start to continue.", new Vector2(50, 50), Color.White);
+                else
+                    spriteBatch.DrawString(font, winningTeam + " Team wins!\nPress start to continue.", new Vector2(50, 50), Color.White);
+            }
             else
                 spriteBatch.DrawString(font, "No contest.\nPress start to continue.", new Vector2(50, 50), Color.White);
         }
