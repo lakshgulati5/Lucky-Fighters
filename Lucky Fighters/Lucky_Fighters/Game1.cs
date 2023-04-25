@@ -123,22 +123,24 @@ namespace Lucky_Fighters
                 {
                     MapSelection alt = (MapSelection)screen;
                     if (alt.direction == Screen.Direction.Forward)
-                        SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters, teams));
+                        SetScreen(new Map(Services, @"Content\Maps\map1.txt", selectedFighters, teams, mode));
                     else
                         SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
+                else if (screen.ReadyForNextScreen() && screen is Map) //go to results
+                {
+                    Map alt = (Map)screen;
+                    if (mode == Screen.Mode.Solo)
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
+                    else
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winningTeam, alt.end));
+                    
+                }
+                else if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
+                {
+                    SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
+                }
             }
-            if (screen.ReadyForNextScreen() && screen is Map) //go to results
-            {
-                Map alt = (Map)screen;
-                SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, alt.winner, alt.end));
-            }
-            if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
-            {
-                SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
-            }
-
-
             base.Update(gameTime);
         }
 
