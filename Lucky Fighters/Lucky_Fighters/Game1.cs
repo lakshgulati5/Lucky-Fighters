@@ -65,12 +65,13 @@ namespace Lucky_Fighters
             // TODO: use this.Content to load your game content here
             int sw = graphics.PreferredBackBufferWidth;
             int sh = graphics.PreferredBackBufferHeight;
-			SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
+            SetScreen(new NumberOfPlayerSelection(Services, sw, sh));
             // testing
-            //SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "archer", "swordfighter" }, new int[] { 0, 1 }));
+            // SetScreen(new Map(Services, @"Content\Maps\map1.txt", new string[] { "archer", "swordfighter" },
+            //     new[] { 0, 1 }, mode));
         }
 
-		public void SetScreen (Screen screen)
+        public void SetScreen(Screen screen)
         {
             this.screen = screen;
             screen.LoadContent();
@@ -127,20 +128,20 @@ namespace Lucky_Fighters
                     else
                         SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
-                else if (screen.ReadyForNextScreen() && screen is Map) //go to results
-                {
-                    Map alt = (Map)screen;
-                    if (mode == Screen.Mode.Solo)
-                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
-                    else
-                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winningTeam, alt.end));
-                    
-                }
-                else if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
-                {
-                    SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
-                }
             }
+
+            if (screen.ReadyForNextScreen() && screen is Map) //go to results
+            {
+                Map alt = (Map)screen;
+                SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
+            }
+
+            if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
+            {
+                SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
+            }
+
+
             base.Update(gameTime);
         }
 
