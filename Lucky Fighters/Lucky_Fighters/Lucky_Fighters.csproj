@@ -87,6 +87,7 @@
     <Compile Include="Game1.cs" />
     <Compile Include="ClassExtensions.cs" />
     <Compile Include="Results.cs" />
+    <Compile Include="SafeRandom.cs" />
     <Compile Include="Screen.cs" />
     <Compile Include="Shield.cs" />
     <Compile Include="SwordFighter.cs" />
