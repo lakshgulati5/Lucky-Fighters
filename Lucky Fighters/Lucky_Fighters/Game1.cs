@@ -128,6 +128,19 @@ namespace Lucky_Fighters
                     else
                         SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
+                else if (screen.ReadyForNextScreen() && screen is Map) //go to results
+                {
+                    Map alt = (Map)screen;
+                    if (mode == Screen.Mode.Solo)
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
+                    else
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winningTeam, alt.end));
+                    
+                }
+                else if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
+                {
+                    SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
+                }
             }
 
             if (screen.ReadyForNextScreen() && screen is Map) //go to results
