@@ -21,6 +21,13 @@ namespace Lucky_Fighters
 
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
 
+        enum InteractiveTypes
+        {
+            Flower,
+            Shield,
+            Wings
+        }
+
         Player[] players;
         string[] fighters;
         int[] teams;
@@ -193,10 +200,8 @@ namespace Lucky_Fighters
                 case '4':
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
-                case 'f':
-                case 's':
-                case 'n':
-                    return LoadInteractiveTile(_x, _y, _tileType);
+                case 'i':
+                    return LoadInteractiveTile(_x, _y);
 
 
                 // Unknown tile type character
@@ -260,31 +265,31 @@ namespace Lucky_Fighters
             return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
-        private Interactive LoadInteractiveTile(int x, int y, char type)
+        private Interactive LoadInteractiveTile(int x, int y)
         {
-            switch (type)
+            switch ((InteractiveTypes)SafeRandom.Next(0, 3))
             {
-                case 'f':
+                case InteractiveTypes.Flower:
                 {
                     var flowerTile = new Flower();
                     Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
                     return flowerTile;
                 }
-                case 's':
+                case InteractiveTypes.Shield:
                 {
                     var shieldTile = new Shield();
                     Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
                     return shieldTile;
                 }
-                case 'n':
+                case InteractiveTypes.Wings:
                 {
                     var wingTile = new Wings();
                     Interactives[new Vector2(x, y) * Tile.Size] = wingTile;
                     return wingTile;
                 }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-
-            return new Flower();
         }
 
         public TileCollision GetCollision(int _x, int _y)
@@ -335,6 +340,7 @@ namespace Lucky_Fighters
             {
                 sprite.Update(_gameTime);
             }
+
             otherSprites.RemoveAll(s => s.ShouldRemove);
 
             foreach (Player player in players)
@@ -410,13 +416,16 @@ namespace Lucky_Fighters
                 if (player.lives > 0 || !player.IsCompletelyDead)
                     player.Draw(spriteBatch, gameTime);
             }
+
             foreach (AnimatedSprite sprite in otherSprites)
             {
                 sprite.Draw(spriteBatch, gameTime);
             }
+
             if (paused)
             {
-                spriteBatch.DrawString(font, "Paused by Player " + pausedBy + "\nQuit- [LB] + [RB]", new Vector2(300, 200), Color.White);
+                spriteBatch.DrawString(font, "Paused by Player " + pausedBy + "\nQuit- [LB] + [RB]",
+                    new Vector2(300, 200), Color.White);
                 if (quitting)
                     spriteBatch.DrawString(font, "Quit?\nYes- A\nNo- B", new Vector2(300, 375), Color.White);
             }
@@ -463,6 +472,7 @@ namespace Lucky_Fighters
         {
             quitting = true;
         }
+
         public void Quit()
         {
             ready = true;
@@ -477,7 +487,8 @@ namespace Lucky_Fighters
         // used to store how the game was ended and determine what the result screen displays
         public enum GameEnd
         {
-            Quit, Win
+            Quit,
+            Win
         }
 
         public GameEnd end { get; private set; }

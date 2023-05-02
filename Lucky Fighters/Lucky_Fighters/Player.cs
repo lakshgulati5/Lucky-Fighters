@@ -15,7 +15,7 @@ namespace Lucky_Fighters
     abstract class Player : AnimatedSprite
     {
         // constants
-        const float MoveAcceleration = 2000f; 
+        const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
         public const float Gravity = 2000f;
@@ -352,16 +352,20 @@ namespace Lucky_Fighters
                 if (Map.pausedBy == playerIndex)
                 {
                     //resume game
-                    if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                    if (gamePad.Buttons.Start == ButtonState.Pressed &&
+                        !(oldGamePad.Buttons.Start == ButtonState.Pressed))
                     {
                         Map.paused = false;
                         Map.quitting = false;
                     }
+
                     //quit game
-                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
+                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                        gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
                     {
                         Map.InitializeQuit();
                     }
+
                     if (Map.quitting)
                     {
                         if (gamePad.Buttons.A == ButtonState.Pressed)
@@ -390,7 +394,6 @@ namespace Lucky_Fighters
 
                 if (CanMove)
                 {
-
                     if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
                         gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
                         playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
@@ -434,11 +437,14 @@ namespace Lucky_Fighters
                     {
                         Interact();
                     }
-                    sprinting = gamePad.Triggers.Left >= TriggerTolerance || (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
+
+                    sprinting = gamePad.Triggers.Left >= TriggerTolerance ||
+                                (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
                     ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
 
                     //pause only by players that are still in the game
-                    if (gamePad.Buttons.Start == ButtonState.Pressed && !(oldGamePad.Buttons.Start == ButtonState.Pressed))
+                    if (gamePad.Buttons.Start == ButtonState.Pressed &&
+                        !(oldGamePad.Buttons.Start == ButtonState.Pressed))
                     {
                         Map.paused = true;
                         Map.pausedBy = playerIndex;
@@ -491,15 +497,13 @@ namespace Lucky_Fighters
 
         private void Interact()
         {
-            foreach (var key in Map.Interactives.Keys)
-            {
-                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width);
+            var intersection = Map.Interactives.Keys.AsEnumerable().Where(key =>
+                new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width).Intersects(Hitbox));
 
-                if (Hitbox.Intersects(interactiveHitbox))
-                {
-                    Map.Interactives[key].ApplyEffect(this);
-                    AddTask(new Task(1, () => { Map.Interactives.Remove(key); }));
-                }
+            foreach (var intersectingInteractive in intersection)
+            {
+                Map.Interactives[intersectingInteractive].ApplyEffect(this);
+                AddTask(new Task(1, () => { Map.Interactives.Remove(intersectingInteractive); }));
             }
         }
 
@@ -508,12 +512,19 @@ namespace Lucky_Fighters
         {
             base.Update(gameTime);
 
-            foreach (var key in Map.Interactives.Keys)
-            {
-                var interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width);
+            //LINQ my beloved
+            //From the Map.Interactives.Keys, select the key(s)
+            //that intersects with the player Hitbox and do not require a keypress
+            var keys =
+                from key in Map.Interactives.Keys
+                let interactiveHitbox = new Rectangle((int)key.X, (int)key.Y, Tile.Height, Tile.Width)
+                where Hitbox.Intersects(interactiveHitbox) && !Map.Interactives[key].RequiresKeypress
+                select key;
 
-                if (Hitbox.Intersects(interactiveHitbox) && !Map.Interactives[key].RequiresKeypress)
-                    Map.Interactives[key].ApplyEffect(this);
+            //Are there better ways of doing this? Probably.
+            foreach (var key in keys)
+            {
+                Map.Interactives[key].ApplyEffect(this);
             }
 
             float elapsed = gameTime.GetElapsedSeconds();
@@ -652,13 +663,12 @@ namespace Lucky_Fighters
         }
 
         public Color GetColor()
-		    {
+        {
             return Game1.DefaultColors[teamId];
         }
 
         public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
         {
-
             var playerColor = Color.Lerp(Color.White, GetColor(), .8f);
 
             if (HasWings)
