@@ -9,14 +9,11 @@
         internal override void ApplyEffect(Player player)
         {
             if (!IsEnabled) return;
-            
+
+            player.HasWings = true;
+            IsEnabled = false;
             player.AddTask(
-                new Task(0, () =>
-                    {
-                        player.HasWings = true;
-                        IsEnabled = false;
-                    }
-                ).Then(10, () => { player.HasWings = false; })
+                new Task(10, () => { player.HasWings = false; })
             );
         }
     }

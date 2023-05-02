@@ -502,8 +502,9 @@ namespace Lucky_Fighters
 
             foreach (var intersectingInteractive in intersection)
             {
-                Map.Interactives[intersectingInteractive].ApplyEffect(this);
-                AddTask(new Task(1, () => { Map.Interactives.Remove(intersectingInteractive); }));
+                Interactive interactive = Map.Interactives[intersectingInteractive];
+                interactive.ApplyEffect(this);
+                AddTask(new Task(10, () => { interactive.Enable(); }));
             }
         }
 
@@ -522,9 +523,12 @@ namespace Lucky_Fighters
                 select key;
 
             //Are there better ways of doing this? Probably.
-            foreach (var key in keys)
+            foreach (var key in keys.ToList())
             {
                 Map.Interactives[key].ApplyEffect(this);
+                Console.WriteLine(Map.Interactives);
+                // Regenerate this powerup and replace it with another one in some time
+                Map.RemovePowerup(key);
             }
 
             float elapsed = gameTime.GetElapsedSeconds();

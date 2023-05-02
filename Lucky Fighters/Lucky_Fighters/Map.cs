@@ -21,9 +21,9 @@ namespace Lucky_Fighters
 
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
 
-        enum InteractiveTypes
+        // Any powerup that can spawn (non hard-coded)
+        enum PowerupTypes
         {
-            Flower,
             Shield,
             Wings
         }
@@ -200,9 +200,13 @@ namespace Lucky_Fighters
                 case '4':
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
+                // interactives
+                // powerups (touching it automatically uses, randomly generated)
                 case 'i':
-                    return LoadInteractiveTile(_x, _y);
-
+                    return LoadPowerupTile(_x, _y);
+                // still interactives (same position, regenerate after time)
+                case 'f':
+                    return LoadInteractiveTile(_x, _y, new Flower());
 
                 // Unknown tile type character
                 default:
@@ -265,31 +269,39 @@ namespace Lucky_Fighters
             return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
-        private Interactive LoadInteractiveTile(int x, int y)
-        {
-            switch ((InteractiveTypes)SafeRandom.Next(0, 3))
+        /// <summary>
+        /// Load a tile for interactives that require a keypress
+        /// </summary>
+        private Interactive LoadInteractiveTile(int x, int y, Interactive interactive)
+		{
+            return Interactives[new Vector2(x, y) * Tile.Size] = interactive;
+        }
+
+        public Interactive LoadPowerupTile(int x, int y)
+		{
+            return LoadInteractiveTile(x, y, GetRandomPowerup());
+		}
+
+        /// <summary>
+        /// Gets a random powerup interactive
+        /// </summary>
+        public Interactive GetRandomPowerup()
+		{
+            switch ((PowerupTypes)SafeRandom.Next(0, Enum.GetValues(typeof(PowerupTypes)).Length))
             {
-                case InteractiveTypes.Flower:
-                {
-                    var flowerTile = new Flower();
-                    Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
-                    return flowerTile;
-                }
-                case InteractiveTypes.Shield:
-                {
-                    var shieldTile = new Shield();
-                    Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
-                    return shieldTile;
-                }
-                case InteractiveTypes.Wings:
-                {
-                    var wingTile = new Wings();
-                    Interactives[new Vector2(x, y) * Tile.Size] = wingTile;
-                    return wingTile;
-                }
+                case PowerupTypes.Shield:
+                    return new Shield();
+                case PowerupTypes.Wings:
+                    return new Wings();
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public void RemovePowerup(Vector2 key)
+		{
+            Interactives.Remove(key);
+            LoadPowerupTile((int)key.X, (int)key.Y);
         }
 
         public TileCollision GetCollision(int _x, int _y)
@@ -409,8 +421,8 @@ namespace Lucky_Fighters
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            DrawTiles(spriteBatch);
-            foreach (Player player in players)
+			DrawTiles(spriteBatch);
+			foreach (Player player in players)
             {
                 // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
                 if (player.lives > 0 || !player.IsCompletelyDead)
@@ -433,6 +445,7 @@ namespace Lucky_Fighters
 
         private void DrawTiles(SpriteBatch spriteBatch)
         {
+            Console.WriteLine(Interactives.Count);
             // For each tile position
             for (int y = 0; y < Height; ++y)
             {
@@ -446,13 +459,13 @@ namespace Lucky_Fighters
                     var position = new Vector2(x, y) * Tile.Size;
 
 
-                    if (Interactives.TryGetValue(position, out var interactive))
-                    {
-                        if (!interactive.IsEnabled) continue;
-                    }
+					if (Interactives.TryGetValue(position, out var interactive))
+					{
+						if (!interactive.IsEnabled) continue;
+					}
 
 
-                    spriteBatch.Draw
+					spriteBatch.Draw
                     (
                         tileSheet,
                         position,
