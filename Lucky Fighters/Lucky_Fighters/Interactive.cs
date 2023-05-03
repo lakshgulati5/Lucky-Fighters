@@ -16,5 +16,10 @@ namespace Lucky_Fighters
         }
 
         internal abstract void ApplyEffect(Player player);
+
+        public void Enable()
+		{
+            IsEnabled = true;
+		}
     }
 }

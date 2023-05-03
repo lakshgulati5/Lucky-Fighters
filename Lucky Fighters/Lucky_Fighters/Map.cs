@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
@@ -21,9 +22,9 @@ namespace Lucky_Fighters
 
         public Dictionary<Vector2, Interactive> Interactives { get; } = new Dictionary<Vector2, Interactive>();
 
-        enum InteractiveTypes
+        // Any powerup that can spawn (non hard-coded)
+        enum PowerupTypes
         {
-            Flower,
             Shield,
             Wings
         }
@@ -35,6 +36,7 @@ namespace Lucky_Fighters
         public Player winner;
         public bool quitting;
         Mode mode;
+        KeyboardState oldKb;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -56,6 +58,8 @@ namespace Lucky_Fighters
 
         public bool paused;
         public PlayerIndex pausedBy;
+
+        List<Task> tasks;
 
         public int Width
         {
@@ -94,6 +98,9 @@ namespace Lucky_Fighters
             this.teams = teams;
             otherSprites = new List<AnimatedSprite>();
             this.mode = mode;
+
+            tasks = new List<Task>();
+
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -200,9 +207,13 @@ namespace Lucky_Fighters
                 case '4':
                     return LoadStartTile(_x, _y, PlayerIndex.Four);
 
+                // interactives
+                // powerups (touching it automatically uses, randomly generated)
                 case 'i':
-                    return LoadInteractiveTile(_x, _y);
-
+                    return LoadPowerupTile(_x, _y);
+                // still interactives (same position, regenerate after time)
+                case 'f':
+                    return LoadInteractiveTile(_x, _y, new Flower());
 
                 // Unknown tile type character
                 default:
@@ -265,31 +276,44 @@ namespace Lucky_Fighters
             return new Tile(_tileSheetName, index, TileCollision.Passable);
         }
 
-        private Interactive LoadInteractiveTile(int x, int y)
-        {
-            switch ((InteractiveTypes)SafeRandom.Next(0, 3))
+        /// <summary>
+        /// Load a tile for interactives that require a keypress
+        /// </summary>
+        private Interactive LoadInteractiveTile(int x, int y, Interactive interactive)
+		{
+            return Interactives[new Vector2(x, y) * Tile.Size] = interactive;
+        }
+
+        public Interactive LoadPowerupTile(int x, int y)
+		{
+            return LoadInteractiveTile(x, y, GetRandomPowerup());
+		}
+
+        /// <summary>
+        /// Gets a random powerup interactive
+        /// </summary>
+        public Interactive GetRandomPowerup()
+		{
+            switch ((PowerupTypes)SafeRandom.Next(0, Enum.GetValues(typeof(PowerupTypes)).Length))
             {
-                case InteractiveTypes.Flower:
-                {
-                    var flowerTile = new Flower();
-                    Interactives[new Vector2(x, y) * Tile.Size] = flowerTile;
-                    return flowerTile;
-                }
-                case InteractiveTypes.Shield:
-                {
-                    var shieldTile = new Shield();
-                    Interactives[new Vector2(x, y) * Tile.Size] = shieldTile;
-                    return shieldTile;
-                }
-                case InteractiveTypes.Wings:
-                {
-                    var wingTile = new Wings();
-                    Interactives[new Vector2(x, y) * Tile.Size] = wingTile;
-                    return wingTile;
-                }
+                case PowerupTypes.Shield:
+                    return new Shield();
+                case PowerupTypes.Wings:
+                    return new Wings();
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        public void RegeneratePowerup(Vector2 key)
+		{
+            Interactives.Remove(key);
+            int tileX = (int)key.X / 96, tileY = (int)key.Y / 96;
+            tiles[tileX, tileY] = Tile.Empty;
+            AddTask(new Task(random.Next(20, 30), () =>
+            {
+                tiles[tileX, tileY] = LoadPowerupTile(tileX, tileY);
+            }));
         }
 
         public TileCollision GetCollision(int _x, int _y)
@@ -335,19 +359,91 @@ namespace Lucky_Fighters
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
+            KeyboardState kb = Keyboard.GetState();
 
-            foreach (AnimatedSprite sprite in otherSprites)
+            if (!paused)
             {
-                sprite.Update(_gameTime);
+                foreach (AnimatedSprite sprite in otherSprites)
+                {
+                    sprite.Update(_gameTime);
+                }
+
+                otherSprites.RemoveAll(s => s.ShouldRemove);
+
+                // Update tasks (moved from Player class to Map)
+                float elapsed = _gameTime.GetElapsedSeconds();
+                for (int i = 0; i < tasks.Count; i++)
+                {
+                    Task task = tasks[i];
+                    task.Update(elapsed);
+                    if (task.IsCompleted)
+                    {
+                        task.WhenCompleted();
+                        // check again to make sure all Then() connected tasks are done
+                        if (task.IsCompleted)
+                        {
+                            tasks.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
             }
 
-            otherSprites.RemoveAll(s => s.ShouldRemove);
-
-            foreach (Player player in players)
+            for (; x < players.Length; x++)
             {
-                player.Update(_gameTime);
-                if (player.IsCompletelyDead && player.lives > 0) player.Reset(starts[x]);
-                if (player.IsDead) OnPlayerKilled(x);
+                Player player = players[x];
+                PlayerIndex playerIndex = player.playerIndex;
+                GamePadState gamePad = player.GetGamePad();
+                GamePadState oldGamePad = player.oldGamePad;
+                //pause game
+                if (paused)
+                {
+                    //can only be unpaused by the player who paused the game
+                    if (pausedBy == playerIndex)
+                    {
+                        //resume game
+                        if (gamePad.Buttons.Start == ButtonState.Pressed && oldGamePad.Buttons.Start == ButtonState.Released ||
+                            playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Escape) && oldKb.IsKeyUp(Keys.Escape))
+                        {
+                            paused = false;
+                            quitting = false;
+                        }
+
+                        //quit game
+                        if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                            gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
+                        {
+                            InitializeQuit();
+                        }
+
+                        if (quitting)
+                        {
+                            if (gamePad.Buttons.A == ButtonState.Pressed)
+                                Quit();
+                            else if (gamePad.Buttons.B == ButtonState.Pressed)
+                                CancelQuit();
+                        }
+                    }
+                }
+                else
+                {
+                    player.Update(_gameTime);
+                    if (player.IsCompletelyDead && player.lives > 0)
+                        player.Reset(starts[x]);
+                    if (player.IsDead)
+                        OnPlayerKilled(x);
+                    
+
+                    //pause only by players that are still in the game
+                    if (gamePad.Buttons.Start == ButtonState.Pressed && oldGamePad.Buttons.Start == ButtonState.Released ||
+                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Escape) && oldKb.IsKeyUp(Keys.Escape))
+                    {
+                        paused = true;
+                        pausedBy = playerIndex;
+                    }
+                }
+
+                // Check if players are alive
                 if (mode == Mode.Solo)
                 {
                     if (player.lives > 0)
@@ -361,8 +457,9 @@ namespace Lucky_Fighters
                         }
                     }
                 }
-                x++;
             }
+
+
             if (mode == Mode.Team)
             {
                 int[] amtAlive = new int[4];
@@ -391,6 +488,13 @@ namespace Lucky_Fighters
                 ready = true;
                 end = GameEnd.Win;
             }
+
+            oldKb = kb;
+        }
+
+        public void AddTask(Task task)
+        {
+            tasks.Add(task);
         }
 
 
@@ -409,8 +513,8 @@ namespace Lucky_Fighters
 
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            DrawTiles(spriteBatch);
-            foreach (Player player in players)
+			DrawTiles(spriteBatch);
+			foreach (Player player in players)
             {
                 // if (lives[(int)player.playerIndex] > 0) player.Draw(spriteBatch, gameTime);
                 if (player.lives > 0 || !player.IsCompletelyDead)
@@ -446,13 +550,13 @@ namespace Lucky_Fighters
                     var position = new Vector2(x, y) * Tile.Size;
 
 
-                    if (Interactives.TryGetValue(position, out var interactive))
-                    {
-                        if (!interactive.IsEnabled) continue;
-                    }
+					if (Interactives.TryGetValue(position, out var interactive))
+					{
+						if (!interactive.IsEnabled) continue;
+					}
 
 
-                    spriteBatch.Draw
+					spriteBatch.Draw
                     (
                         tileSheet,
                         position,

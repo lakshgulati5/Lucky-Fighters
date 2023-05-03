@@ -9,14 +9,11 @@
         internal override void ApplyEffect(Player player)
         {
             if (!IsEnabled) return;
-            
+
+            player.IsShielded = true;
+            IsEnabled = false;
             player.AddTask(
-                new Task(0, () =>
-                    {
-                        player.IsShielded = true;
-                        IsEnabled = false;
-                    }
-                ).Then(5, () => { player.IsShielded = false; })
+                new Task(5, () => { player.IsShielded = false; })
             );
         }
     }
