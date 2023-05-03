@@ -11,6 +11,8 @@ namespace Lucky_Fighters
 {
     class NumberOfPlayerSelection : Screen
     {
+        const float JoystickTolerance = .5f;
+
         int timer;
         SpriteFont font;
         SpriteFont bigFont;
@@ -138,9 +140,9 @@ namespace Lucky_Fighters
                         num--;
                     if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
                         num++;
-                    if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
+                    if (gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance))
                         num--;
-                    if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
+                    if (gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance))
                         num++;
                 }
                 else
@@ -149,9 +151,9 @@ namespace Lucky_Fighters
                         soloSelected = true;
                     if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
                         soloSelected = false;
-                    if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
+                    if (gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance))
                         soloSelected = true;
-                    if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
+                    if (gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance))
                         soloSelected = false;
                 }
 
@@ -159,9 +161,9 @@ namespace Lucky_Fighters
                     top = true;
                 if (gp[x].DPad.Down == ButtonState.Pressed && !(oldGP[x].DPad.Down == ButtonState.Pressed))
                     top = false;
-                if (gp[x].ThumbSticks.Left.Y > 0 && !(oldGP[x].ThumbSticks.Left.Y > 0))
+                if (gp[x].ThumbSticks.Left.Y > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y > JoystickTolerance))
                     top = true;
-                if (gp[x].ThumbSticks.Left.Y < 0 && !(oldGP[x].ThumbSticks.Left.Y < 0))
+                if (gp[x].ThumbSticks.Left.Y < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y < -JoystickTolerance))
                     top = false;
             }
             if (num < 2)

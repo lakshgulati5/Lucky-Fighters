@@ -41,7 +41,7 @@ namespace Lucky_Fighters
         // player identifiers
         public PlayerIndex playerIndex { get; }
         int teamId;
-        GamePadState oldGamePad;
+        public GamePadState oldGamePad { get; private set; }
         KeyboardState oldKb;
         protected Map Map;
 
@@ -105,8 +105,6 @@ namespace Lucky_Fighters
 
         public virtual bool CanMove => !attacking && !IsBlocking && DisabledTime <= 0 && !Map.paused;
 
-        List<Task> tasks;
-
         // virtual allows this to be overridden by fighter subclasses
         public virtual Rectangle Hitbox
         {
@@ -148,8 +146,6 @@ namespace Lucky_Fighters
             font = Map.Content.Load<SpriteFont>("SpriteFont1");
             boldFont = Map.Content.Load<SpriteFont>("Bold");
 
-            tasks = new List<Task>();
-
             shieldBubble = Map.Content.Load<Texture2D>("Interactives/ShieldBubble");
 
             // add more to this list as more functionality is added
@@ -161,7 +157,7 @@ namespace Lucky_Fighters
 
         public void AddTask(Task task)
         {
-            tasks.Add(task);
+            Map.AddTask(task);
         }
 
         public bool IsPlayerFriendly(Player other)
@@ -344,118 +340,84 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             KeyboardState kb = Keyboard.GetState();
-            GamePadState gamePad = GamePad.GetState(playerIndex);
-            //pause game
-            if (Map.paused)
+            GamePadState gamePad = GetGamePad();
+
+            movement = gamePad.ThumbSticks.Left.X;
+            if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One ||
+                kb.IsKeyDown(Keys.Left) && playerIndex == PlayerIndex.Two)
+                movement += -1;
+            if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One ||
+                kb.IsKeyDown(Keys.Right) && playerIndex == PlayerIndex.Two)
+                movement += 1;
+            if (Math.Abs(movement) < .1f)
+                movement = 0f;
+            else
+                movement = MathHelper.Clamp(movement, -1f, 1f);
+            // flip the sprite based on the direction the player is inputting
+            if (movement < 0)
+                flip = SpriteEffects.FlipHorizontally;
+            else if (movement > 0)
+                flip = SpriteEffects.None;
+
+            if (CanMove)
             {
-                //can only be unpaused by the player who paused the game
-                if (Map.pausedBy == playerIndex)
+                if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
+                    gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space) ||
+                    playerIndex == PlayerIndex.Two && kb.IsKeyDown(Keys.RightShift) && oldKb.IsKeyUp(Keys.RightShift))
                 {
-                    //resume game
-                    if (gamePad.Buttons.Start == ButtonState.Pressed &&
-                        !(oldGamePad.Buttons.Start == ButtonState.Pressed))
-                    {
-                        Map.paused = false;
-                        Map.quitting = false;
-                    }
-
-                    //quit game
-                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
-                        gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
-                    {
-                        Map.InitializeQuit();
-                    }
-
-                    if (Map.quitting)
-                    {
-                        if (gamePad.Buttons.A == ButtonState.Pressed)
-                            Map.Quit();
-                        else if (gamePad.Buttons.B == ButtonState.Pressed)
-                            Map.CancelQuit();
-                    }
+                    SendJump();
                 }
+
+                if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W) ||
+                    playerIndex == PlayerIndex.Two && kb.IsKeyDown(Keys.Up) && oldKb.IsKeyUp(Keys.Up))
+                {
+                    Attack();
+                }
+
+                if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S) ||
+                    playerIndex == PlayerIndex.Two && kb.IsKeyDown(Keys.Down) && oldKb.IsKeyUp(Keys.Down))
+                {
+                    SpecialAttack();
+                }
+
+                /*
+                if (gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
+                {
+                    // fighter subclasses may not use entire luck bar
+                    Ultimate();
+                }
+                */
+
+                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                    oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+                {
+                    Dodge();
+                }
+
+                if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
+                {
+                    Block();
+                }
+
+                if (gamePad.Buttons.LeftStick == ButtonState.Pressed && oldGamePad.Buttons.LeftStick == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.E) && oldKb.IsKeyUp(Keys.E) ||
+                    playerIndex == PlayerIndex.Two && kb.IsKeyDown(Keys.OemQuestion) && oldKb.IsKeyUp(Keys.OemQuestion))
+                {
+                    Interact();
+                }
+
+                sprinting = gamePad.Triggers.Left >= TriggerTolerance ||
+                            kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One ||
+                            kb.IsKeyDown(Keys.RightControl) && playerIndex == PlayerIndex.Two;
+                ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
             }
             else
             {
-                movement = gamePad.ThumbSticks.Left.X;
-                if (kb.IsKeyDown(Keys.A) && playerIndex == PlayerIndex.One)
-                    movement += -1;
-                if (kb.IsKeyDown(Keys.D) && playerIndex == PlayerIndex.One)
-                    movement += 1;
-                if (Math.Abs(movement) < .1f)
-                    movement = 0f;
-                else
-                    movement = MathHelper.Clamp(movement, -1f, 1f);
-                // flip the sprite based on the direction the player is inputting
-                if (movement < 0)
-                    flip = SpriteEffects.FlipHorizontally;
-                else if (movement > 0)
-                    flip = SpriteEffects.None;
-
-                if (CanMove)
-                {
-                    if (gamePad.Buttons.A == ButtonState.Pressed && oldGamePad.Buttons.A == ButtonState.Released ||
-                        gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released ||
-                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Space) && oldKb.IsKeyUp(Keys.Space))
-                    {
-                        SendJump();
-                    }
-
-                    if (gamePad.Buttons.X == ButtonState.Pressed && oldGamePad.Buttons.X == ButtonState.Released ||
-                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.W) && oldKb.IsKeyUp(Keys.W))
-                    {
-                        Attack();
-                    }
-
-                    if (gamePad.Buttons.B == ButtonState.Pressed && oldGamePad.Buttons.B == ButtonState.Released ||
-                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.S) && oldKb.IsKeyUp(Keys.S))
-                    {
-                        SpecialAttack();
-                    }
-
-                    /*
-                    if (gamePad.Buttons.Y == ButtonState.Pressed && oldGamePad.Buttons.Y == ButtonState.Released)
-                    {
-                        // fighter subclasses may not use entire luck bar
-                        Ultimate();
-                    }
-                    */
-
-                    if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
-                        oldGamePad.Buttons.RightShoulder == ButtonState.Released)
-                    {
-                        Dodge();
-                    }
-
-                    if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
-                    {
-                        Block();
-                    }
-
-                    if (gamePad.Buttons.LeftStick == ButtonState.Pressed &&
-                        oldGamePad.Buttons.LeftStick == ButtonState.Released)
-                    {
-                        Interact();
-                    }
-
-                    sprinting = gamePad.Triggers.Left >= TriggerTolerance ||
-                                (kb.IsKeyDown(Keys.LeftShift) && playerIndex == PlayerIndex.One);
-                    ducking = gamePad.Buttons.LeftShoulder == ButtonState.Pressed;
-
-                    //pause only by players that are still in the game
-                    if (gamePad.Buttons.Start == ButtonState.Pressed &&
-                        !(oldGamePad.Buttons.Start == ButtonState.Pressed))
-                    {
-                        Map.paused = true;
-                        Map.pausedBy = playerIndex;
-                    }
-                }
-                else
-                {
-                    movement = 0f;
-                }
+                movement = 0f;
             }
-
 
             oldGamePad = gamePad;
             oldKb = kb;
@@ -495,6 +457,11 @@ namespace Lucky_Fighters
             }
         }
 
+        public GamePadState GetGamePad()
+        {
+            return GamePad.GetState(playerIndex);
+        }
+
         private void Interact()
         {
             var intersection = Map.Interactives.Keys.AsEnumerable().Where(key =>
@@ -504,7 +471,7 @@ namespace Lucky_Fighters
             {
                 Interactive interactive = Map.Interactives[intersectingInteractive];
                 interactive.ApplyEffect(this);
-                AddTask(new Task(10, () => { interactive.Enable(); }));
+                AddTask(new Task(20, () => { interactive.Enable(); }));
             }
         }
 
@@ -526,9 +493,8 @@ namespace Lucky_Fighters
             foreach (var key in keys.ToList())
             {
                 Map.Interactives[key].ApplyEffect(this);
-                Console.WriteLine(Map.Interactives);
                 // Regenerate this powerup and replace it with another one in some time
-                Map.RemovePowerup(key);
+                Map.RegeneratePowerup(key);
             }
 
             float elapsed = gameTime.GetElapsedSeconds();
@@ -547,22 +513,6 @@ namespace Lucky_Fighters
                     DoPhysics(elapsed);
 
                 AdditionalHealth = Math.Min(MaxHealth, AdditionalHealth + AdditionalHealthRegen * elapsed);
-            }
-
-            for (int i = 0; i < tasks.Count; i++)
-            {
-                Task task = tasks[i];
-                task.Update(elapsed);
-                if (task.IsCompleted)
-                {
-                    task.WhenCompleted();
-                    // check again to make sure all Then() connected tasks are done
-                    if (task.IsCompleted)
-                    {
-                        tasks.RemoveAt(i);
-                        i--;
-                    }
-                }
             }
         }
 

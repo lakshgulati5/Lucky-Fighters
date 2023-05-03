@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
@@ -35,6 +36,7 @@ namespace Lucky_Fighters
         public Player winner;
         public bool quitting;
         Mode mode;
+        KeyboardState oldKb;
 
         // holds the starting point for the level for each player
         private Vector2[] starts;
@@ -56,6 +58,8 @@ namespace Lucky_Fighters
 
         public bool paused;
         public PlayerIndex pausedBy;
+
+        List<Task> tasks;
 
         public int Width
         {
@@ -94,6 +98,9 @@ namespace Lucky_Fighters
             this.teams = teams;
             otherSprites = new List<AnimatedSprite>();
             this.mode = mode;
+
+            tasks = new List<Task>();
+
             // lives = new int[fighters.Length];
             // create a collection of source rectangles.
             TileSourceRecs = new Dictionary<int, Rectangle>();
@@ -298,10 +305,15 @@ namespace Lucky_Fighters
             }
         }
 
-        public void RemovePowerup(Vector2 key)
+        public void RegeneratePowerup(Vector2 key)
 		{
             Interactives.Remove(key);
-            LoadPowerupTile((int)key.X, (int)key.Y);
+            int tileX = (int)key.X / 96, tileY = (int)key.Y / 96;
+            tiles[tileX, tileY] = Tile.Empty;
+            AddTask(new Task(random.Next(20, 30), () =>
+            {
+                tiles[tileX, tileY] = LoadPowerupTile(tileX, tileY);
+            }));
         }
 
         public TileCollision GetCollision(int _x, int _y)
@@ -347,19 +359,91 @@ namespace Lucky_Fighters
             bool someoneAlive = false;
             bool multipleAlive = false;
             int x = 0;
+            KeyboardState kb = Keyboard.GetState();
 
-            foreach (AnimatedSprite sprite in otherSprites)
+            if (!paused)
             {
-                sprite.Update(_gameTime);
+                foreach (AnimatedSprite sprite in otherSprites)
+                {
+                    sprite.Update(_gameTime);
+                }
+
+                otherSprites.RemoveAll(s => s.ShouldRemove);
+
+                // Update tasks (moved from Player class to Map)
+                float elapsed = _gameTime.GetElapsedSeconds();
+                for (int i = 0; i < tasks.Count; i++)
+                {
+                    Task task = tasks[i];
+                    task.Update(elapsed);
+                    if (task.IsCompleted)
+                    {
+                        task.WhenCompleted();
+                        // check again to make sure all Then() connected tasks are done
+                        if (task.IsCompleted)
+                        {
+                            tasks.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
             }
 
-            otherSprites.RemoveAll(s => s.ShouldRemove);
-
-            foreach (Player player in players)
+            for (; x < players.Length; x++)
             {
-                player.Update(_gameTime);
-                if (player.IsCompletelyDead && player.lives > 0) player.Reset(starts[x]);
-                if (player.IsDead) OnPlayerKilled(x);
+                Player player = players[x];
+                PlayerIndex playerIndex = player.playerIndex;
+                GamePadState gamePad = player.GetGamePad();
+                GamePadState oldGamePad = player.oldGamePad;
+                //pause game
+                if (paused)
+                {
+                    //can only be unpaused by the player who paused the game
+                    if (pausedBy == playerIndex)
+                    {
+                        //resume game
+                        if (gamePad.Buttons.Start == ButtonState.Pressed && oldGamePad.Buttons.Start == ButtonState.Released ||
+                            playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Escape) && oldKb.IsKeyUp(Keys.Escape))
+                        {
+                            paused = false;
+                            quitting = false;
+                        }
+
+                        //quit game
+                        if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
+                            gamePad.Buttons.LeftShoulder == ButtonState.Pressed)
+                        {
+                            InitializeQuit();
+                        }
+
+                        if (quitting)
+                        {
+                            if (gamePad.Buttons.A == ButtonState.Pressed)
+                                Quit();
+                            else if (gamePad.Buttons.B == ButtonState.Pressed)
+                                CancelQuit();
+                        }
+                    }
+                }
+                else
+                {
+                    player.Update(_gameTime);
+                    if (player.IsCompletelyDead && player.lives > 0)
+                        player.Reset(starts[x]);
+                    if (player.IsDead)
+                        OnPlayerKilled(x);
+                    
+
+                    //pause only by players that are still in the game
+                    if (gamePad.Buttons.Start == ButtonState.Pressed && oldGamePad.Buttons.Start == ButtonState.Released ||
+                        playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.Escape) && oldKb.IsKeyUp(Keys.Escape))
+                    {
+                        paused = true;
+                        pausedBy = playerIndex;
+                    }
+                }
+
+                // Check if players are alive
                 if (mode == Mode.Solo)
                 {
                     if (player.lives > 0)
@@ -373,8 +457,9 @@ namespace Lucky_Fighters
                         }
                     }
                 }
-                x++;
             }
+
+
             if (mode == Mode.Team)
             {
                 int[] amtAlive = new int[4];
@@ -403,6 +488,13 @@ namespace Lucky_Fighters
                 ready = true;
                 end = GameEnd.Win;
             }
+
+            oldKb = kb;
+        }
+
+        public void AddTask(Task task)
+        {
+            tasks.Add(task);
         }
 
 
@@ -445,7 +537,6 @@ namespace Lucky_Fighters
 
         private void DrawTiles(SpriteBatch spriteBatch)
         {
-            Console.WriteLine(Interactives.Count);
             // For each tile position
             for (int y = 0; y < Height; ++y)
             {
