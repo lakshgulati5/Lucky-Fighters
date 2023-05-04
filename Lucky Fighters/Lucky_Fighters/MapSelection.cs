@@ -28,10 +28,9 @@ namespace Lucky_Fighters
         bool ready;
         
         public Direction direction { get; private set; }
-        public ContentManager Content { get; }
-        public MapSelection (IServiceProvider _serviceProvider, int sw, int sh, int numOfPlayers)
+
+        public MapSelection (IServiceProvider _serviceProvider, int sw, int sh, int numOfPlayers) : base(_serviceProvider)
         {
-            Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
             this.sh = sh;
             selection = 0;

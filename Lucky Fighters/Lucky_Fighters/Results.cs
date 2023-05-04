@@ -21,10 +21,9 @@ namespace Lucky_Fighters
         int numOfPlayers;
         GamePadState[] gp;
         Map.GameEnd end;
-        public ContentManager Content { get; }
-        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, Player winner, Map.GameEnd end)
+
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, Player winner, Map.GameEnd end) : base(_serviceProvider)
         {
-            Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
             this.sh = sh;
             this.winner = winner;
@@ -35,9 +34,8 @@ namespace Lucky_Fighters
         }
 
         //no winner (quit game)
-        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, string winner, Map.GameEnd end)
+        public Results(IServiceProvider _serviceProvider, int sw, int sh, int num, Screen.Mode mode, string winner, Map.GameEnd end) : base(_serviceProvider)
         {
-            Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
             this.sh = sh;
             winningTeam = winner;
@@ -85,14 +83,13 @@ namespace Lucky_Fighters
             for (int x = 0; x < gp.Length; x++)
             {
                 gp[x] = GamePad.GetState((PlayerIndex)x);
-            }
-            for (int x = 0; x < gp.Length; x++)
-            {
                 if (gp[x].Buttons.Start == ButtonState.Pressed)
                 {
                     ready = true;
                 }
             }
+            if (Keyboard.GetState().StartKeyPressed())
+                ready = true;
         }
     }
 }

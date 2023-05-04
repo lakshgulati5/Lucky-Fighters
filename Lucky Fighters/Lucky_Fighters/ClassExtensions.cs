@@ -54,5 +54,45 @@ namespace Lucky_Fighters
         {
             return (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
+
+        public static bool StartKeyPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.Enter);
+        }
+
+        public static bool BackKeyPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.Back);
+        }
+
+        public static bool MenuUpPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.W) || kb.IsKeyDown(Keys.Up);
+        }
+
+        public static bool MenuDownPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.S) || kb.IsKeyDown(Keys.Down);
+        }
+
+        public static bool MenuLeftPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.A) || kb.IsKeyDown(Keys.Left);
+        }
+
+        public static bool MenuRightPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.D) || kb.IsKeyDown(Keys.Right);
+        }
+
+        public static bool GamePadAPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.Space);
+        }
+
+        public static bool GamePadBPressed(this KeyboardState kb)
+        {
+            return kb.IsKeyDown(Keys.Tab);
+        }
     }
 }

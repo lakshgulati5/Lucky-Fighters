@@ -28,6 +28,7 @@ namespace Lucky_Fighters
         int sh;
         GamePadState[] oldGP;
         GamePadState[] gp;
+        KeyboardState oldKb;
         bool ready;
         bool top;
         bool soloSelected;
@@ -37,10 +38,9 @@ namespace Lucky_Fighters
         public Direction direction { get; private set; }
 
 
-        public NumberOfPlayerSelection(IServiceProvider _serviceProvider, int sw, int sh)
+        public NumberOfPlayerSelection(IServiceProvider _serviceProvider, int sw, int sh) : base(_serviceProvider)
         {
             timer = 0;
-            Content = new ContentManager(_serviceProvider, "Content");
             this.sw = sw;
             this.sh = sh;
             instructions = new Rectangle(100, 100, sw - 200, sh / 2);
@@ -56,6 +56,7 @@ namespace Lucky_Fighters
                 oldGP[x] = GamePad.GetState((PlayerIndex)x);
             ready = false;
             gp = new GamePadState[4];
+            oldKb = Keyboard.GetState();
             top = true;
             soloSelected = true;
             modeColor = selectedColor;
@@ -74,7 +75,6 @@ namespace Lucky_Fighters
             }
         }
 
-        public ContentManager Content { get; }
         public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(blank, instructions, Color.Red);
@@ -131,39 +131,40 @@ namespace Lucky_Fighters
 
         public void GetInput()
         {
+            KeyboardState kb = Keyboard.GetState();
             for (int x = 0; x < gp.Length; x++)
             {
                 gp[x] = GamePad.GetState((PlayerIndex)x);
                 if (top)
                 {
-                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
+                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance) ||
+                        x == 1 && kb.MenuLeftPressed() && !oldKb.MenuLeftPressed())
                         num--;
-                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
-                        num++;
-                    if (gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance))
-                        num--;
-                    if (gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance))
+                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance) ||
+                        x == 1 && kb.MenuRightPressed() && !oldKb.MenuRightPressed())
                         num++;
                 }
                 else
                 {
-                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
+                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance) ||
+                        x == 1 && kb.MenuLeftPressed() && !oldKb.MenuLeftPressed())
                         soloSelected = true;
-                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
-                        soloSelected = false;
-                    if (gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance))
-                        soloSelected = true;
-                    if (gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance))
+                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance) ||
+                        x == 1 && kb.MenuRightPressed() && !oldKb.MenuRightPressed())
                         soloSelected = false;
                 }
 
-                if (gp[x].DPad.Up == ButtonState.Pressed && !(oldGP[x].DPad.Up == ButtonState.Pressed))
+                if (gp[x].DPad.Up == ButtonState.Pressed && !(oldGP[x].DPad.Up == ButtonState.Pressed) ||
+                    gp[x].ThumbSticks.Left.Y > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y > JoystickTolerance) ||
+                    x == 1 && kb.MenuUpPressed() && !oldKb.MenuUpPressed())
                     top = true;
-                if (gp[x].DPad.Down == ButtonState.Pressed && !(oldGP[x].DPad.Down == ButtonState.Pressed))
-                    top = false;
-                if (gp[x].ThumbSticks.Left.Y > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y > JoystickTolerance))
-                    top = true;
-                if (gp[x].ThumbSticks.Left.Y < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y < -JoystickTolerance))
+                if (gp[x].DPad.Down == ButtonState.Pressed && !(oldGP[x].DPad.Down == ButtonState.Pressed) ||
+                    gp[x].ThumbSticks.Left.Y < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.Y < -JoystickTolerance) ||
+                    x == 1 && kb.MenuDownPressed() && !oldKb.MenuDownPressed())
                     top = false;
             }
             if (num < 2)
@@ -172,13 +173,15 @@ namespace Lucky_Fighters
                 num = 2;
             for (int x = 0; x < gp.Length; x++)
             {
-                if (gp[x].Buttons.A == ButtonState.Pressed)
+                if (gp[x].Buttons.A == ButtonState.Pressed ||
+                    x == 1 && kb.GamePadAPressed())
                 {
                     direction = Direction.Forward;
                     ready = true;
                 }
                 oldGP[x] = gp[x];
             }
+            oldKb = kb;
         }
 
         private void ArrowHover()
