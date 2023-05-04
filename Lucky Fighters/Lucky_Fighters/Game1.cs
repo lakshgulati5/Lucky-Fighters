@@ -74,6 +74,8 @@ namespace Lucky_Fighters
 
         public void SetScreen(Screen screen)
         {
+            if (this.screen != null)
+                this.screen.Dispose();
             this.screen = screen;
             screen.LoadContent();
         }

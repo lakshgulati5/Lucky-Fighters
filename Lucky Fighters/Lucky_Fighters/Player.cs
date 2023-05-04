@@ -41,7 +41,7 @@ namespace Lucky_Fighters
         // player identifiers
         public PlayerIndex playerIndex { get; }
         int teamId;
-        public GamePadState oldGamePad { get; private set; }
+        public GamePadState oldGamePad;
         KeyboardState oldKb;
         protected Map Map;
 
@@ -391,13 +391,14 @@ namespace Lucky_Fighters
                 }
                 */
 
-                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed &&
-                    oldGamePad.Buttons.RightShoulder == ButtonState.Released)
+                if (gamePad.Buttons.RightShoulder == ButtonState.Pressed && oldGamePad.Buttons.RightShoulder == ButtonState.Released ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.R) && oldKb.IsKeyUp(Keys.R))
                 {
                     Dodge();
                 }
 
-                if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance)
+                if (gamePad.Triggers.Right >= TriggerTolerance && oldGamePad.Triggers.Right < TriggerTolerance ||
+                    playerIndex == PlayerIndex.One && kb.IsKeyDown(Keys.F) && oldKb.IsKeyUp(Keys.F))
                 {
                     Block();
                 }

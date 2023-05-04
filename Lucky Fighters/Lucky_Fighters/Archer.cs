@@ -14,10 +14,17 @@ namespace Lucky_Fighters
 {
     class Archer : Player
     {
+        const float BasicAttackCooldown = .18f;
+        const float BasicAttackForeswing = .12f;
+        const float BasicAttackDamage = 5f;
+
+        Rectangle attackRectangle;
+
         const float SpecialAttackCooldown = 1.5f;
         const float SpecialAttackForeswing = .55f;
         const float SpecialAttackDamage = 20f;
         const float SpecialAttackBackswing = .1f;
+        // Angle of the arrow is 18 degrees above parallel
         const double SpecialAttackAngle = Math.PI / 10;
 
         Texture2D arrowTex;
@@ -30,12 +37,41 @@ namespace Lucky_Fighters
             SpriteAnimations.Add("Running", new Animation(new int[] { 2, 3, 4, 5 }, 14, true));
             SpriteAnimations.Add("Sprinting", new Animation(new int[] { 2, 3, 4, 5 }, 18, true));
             SpriteAnimations.Add("Jumping", new Animation(new int[] { 6, 7, 8 }, 10, false));
+            SpriteAnimations.Add("Attacking", new Animation(new int[] { 17, 18, 19, 19, 19 }, 16, false));
             SpriteAnimations.Add("SpecialAttacking", new Animation(new int[] { 9, 10, 11, 12, 13, 13, 14, 15, 16 }, 16, false));
+            SpriteAnimations.Add("Blocking", new Animation(new int[] { 22, 23, 24 }, 16, false));
+            SpriteAnimations.Add("Hurt", new Animation(new int[] { 20, 21 }, 10, false));
         }
 
         public override void Attack()
         {
-            
+            if (AttackCooldown > 0f || attacking)
+                return;
+
+            attacking = true;
+            SetAndPlayAnimation("Attacking");
+
+            AddTask(new Task(BasicAttackForeswing, () =>
+            {
+                Rectangle attackHitbox = GetAdjustedAttackHitbox(new Rectangle(10, -120, 60, 80));
+                Point center = attackHitbox.Center;
+                foreach (Player otherPlayer in Map.GetCollidingPlayers(attackHitbox))
+                {
+                    if (!IsPlayerFriendly(otherPlayer))
+                    {
+                        OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
+                    }
+                }
+                //attackRectangle = attackHitbox;
+                attacking = false;
+            })
+            //.Then(.1f, () =>
+            //{
+            //    attackRectangle = new Rectangle();
+            //})
+            );
+
+            AttackCooldown = BasicAttackCooldown;
         }
 
         public override void SpecialAttack()
@@ -64,6 +100,12 @@ namespace Lucky_Fighters
             // TODO implement
             if (Luck < 100f)
                 return;
+        }
+
+        public override void Draw(SpriteBatch spriteBatch, GameTime gameTime)
+        {
+            base.Draw(spriteBatch, gameTime);
+            //spriteBatch.Draw(blank, attackRectangle, new Color(1, 0, 0, .5f));
         }
     }
 }

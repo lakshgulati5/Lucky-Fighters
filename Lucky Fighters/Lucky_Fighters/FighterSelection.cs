@@ -11,6 +11,8 @@ namespace Lucky_Fighters
 {
     class FighterSelection : Screen
     {
+        const float JoystickTolerance = .5f;
+
         string[] teamColorStrings = new string[] { "Blue", "Red", "Green", "Yellow" };
         int timer;
         Color[] alt;
@@ -33,6 +35,7 @@ namespace Lucky_Fighters
         SpriteFont font;
         GamePadState[] gp;
         GamePadState[] oldGP;
+        KeyboardState oldKb;
         public bool started;
         Mode mode;
         Color[] teamOptions;
@@ -40,21 +43,19 @@ namespace Lucky_Fighters
         const int implementedFighters = 2;
         public Direction direction { get; private set; }
 
-        public ContentManager Content { get; }
-
         public int[] SelectedTeams { get { return selectedTeam; } }
 
-        public FighterSelection (IServiceProvider _serviceProvider, int sw, int sh, int nOfPlayers, Mode mode)
+        public FighterSelection (IServiceProvider _serviceProvider, int sw, int sh, int nOfPlayers, Mode mode) : base(_serviceProvider)
         {
             timer = 0;
             numOfPlayers = nOfPlayers;
             selections = new int[numOfPlayers];
             gp = new GamePadState[numOfPlayers];
             oldGP = new GamePadState[numOfPlayers];
+            oldKb = Keyboard.GetState();
             alt = new Color[numOfPlayers];
             if (numOfPlayers < 2)
                 throw new Exception("Need at least two players to play");
-            Content = new ContentManager(_serviceProvider, "Content");
             screenWidth = sw;
             screenHeight = sh;
             players = new Rectangle[numOfPlayers];
@@ -127,26 +128,23 @@ namespace Lucky_Fighters
         private void GetInput()
         {
             //get player input
-            gp[0] = GamePad.GetState(PlayerIndex.One);
-            gp[1] = GamePad.GetState(PlayerIndex.Two);
-            if (numOfPlayers >= 3)
-                gp[2] = GamePad.GetState(PlayerIndex.Three);
-            if (numOfPlayers == 4)
-                gp[3] = GamePad.GetState(PlayerIndex.Four);
+            for (int x = 0; x < numOfPlayers; x++)
+            {
+                gp[x] = GamePad.GetState((PlayerIndex)x);
+            }
+            KeyboardState kb = Keyboard.GetState();
             for (int x = 0; x < numOfPlayers; x++)
             {
                 if (!ready[x])
                 {
-                    //select by dpad
-                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed))
+                    //select by dpad, thumbstick, or keyboard
+                    if (gp[x].DPad.Right == ButtonState.Pressed && !(oldGP[x].DPad.Right == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X > JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X > JoystickTolerance) ||
+                        x == 1 && kb.MenuRightPressed() && !oldKb.MenuRightPressed())
                         selections[x]++;
-                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed))
-                        selections[x]--;
-
-                    //select by left thumbstick
-                    if (gp[x].ThumbSticks.Left.X > 0 && !(oldGP[x].ThumbSticks.Left.X > 0))
-                        selections[x]++;
-                    if (gp[x].ThumbSticks.Left.X < 0 && !(oldGP[x].ThumbSticks.Left.X < 0))
+                    if (gp[x].DPad.Left == ButtonState.Pressed && !(oldGP[x].DPad.Left == ButtonState.Pressed) ||
+                        gp[x].ThumbSticks.Left.X < -JoystickTolerance && !(oldGP[x].ThumbSticks.Left.X < -JoystickTolerance) ||
+                        x == 1 && kb.MenuLeftPressed() && !oldKb.MenuLeftPressed())
                         selections[x]--;
 
                     //keep in bounds
@@ -170,26 +168,30 @@ namespace Lucky_Fighters
                         selectedTeam[x] = 0;
 
                     //declare that the player is ready
-                    if (gp[x].IsButtonDown(Buttons.A))
+                    if (gp[x].IsButtonDown(Buttons.A) ||
+                        x == 1 && kb.GamePadAPressed() && !oldKb.GamePadAPressed())
                     {
                         ready[x] = true;
                     }
                 }
                 //unready
-                if (gp[x].IsButtonDown(Buttons.B))
+                if (gp[x].IsButtonDown(Buttons.B) ||
+                        x == 1 && kb.GamePadBPressed() && !oldKb.GamePadBPressed())
                 {
                     ready[x] = false;
                 }
 
                 if (ReadyToStart())
                 {
-                    if (gp[x].IsButtonDown(Buttons.Start))
+                    if (gp[x].IsButtonDown(Buttons.Start) && oldGP[x].IsButtonUp(Buttons.Start) ||
+                        x == 1 && kb.StartKeyPressed() && !oldKb.StartKeyPressed())
                     {
                         direction = Direction.Forward;
                         started = true;
                     }
                 }
-                if (gp[x].Buttons.Back == ButtonState.Pressed)
+                if (gp[x].Buttons.Back == ButtonState.Pressed && oldGP[x].Buttons.Back == ButtonState.Released ||
+                    x == 1 && kb.BackKeyPressed() && !oldKb.BackKeyPressed())
                 {
                     direction = Direction.Backward;
                     started = true;
@@ -197,6 +199,7 @@ namespace Lucky_Fighters
 
                 oldGP[x] = gp[x];
             }
+            oldKb = kb;
         }
 
         private bool ReadyToStart()

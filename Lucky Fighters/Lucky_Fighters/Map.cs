@@ -11,7 +11,7 @@ using System.Text;
 
 namespace Lucky_Fighters
 {
-    class Map : Screen, IDisposable
+    class Map : Screen
     {
         string[] teamColorStrings = new string[] { "Blue", "Red", "Green", "Yellow" };
         private Tile[,] tiles;
@@ -47,8 +47,6 @@ namespace Lucky_Fighters
 
         SoundEffectInstance backgroundMusic;
 
-        public ContentManager Content { get; }
-
         private const int TileWidth = 96;
         private const int TileHeight = 96;
         private const int TilesPerRow = 5;
@@ -77,10 +75,8 @@ namespace Lucky_Fighters
             private set;
         }
 
-        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams, Mode mode)
+        public Map(IServiceProvider _serviceProvider, string path, string[] fighters, int[] teams, Mode mode) : base(_serviceProvider)
         {
-            // Create a new content manager to load content used just by this level.
-            Content = new ContentManager(_serviceProvider, "Content");
 
             // load the textures
             tileSheets = new Dictionary<string, Texture2D>();
@@ -424,6 +420,7 @@ namespace Lucky_Fighters
                                 CancelQuit();
                         }
                     }
+                    player.oldGamePad = gamePad;
                 }
                 else
                 {
@@ -565,11 +562,6 @@ namespace Lucky_Fighters
                     );
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            Content.Unload();
         }
 
         public void InitializeQuit()
