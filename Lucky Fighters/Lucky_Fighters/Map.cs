@@ -237,7 +237,7 @@ namespace Lucky_Fighters
 
                     break;
                 case "archer":
-                    players[(int)index] = new Archer(this, start, index, (int)index);
+                    players[(int)index] = new Archer(this, start, index, teams[(int)index]);
                     break;
                 /*
                 case "ninja":
@@ -474,7 +474,7 @@ namespace Lucky_Fighters
                         else
                         {
                             someoneAlive = true;
-                            winningTeam = teamColorStrings[teams[x]];
+                            winningTeam = teamColorStrings[x];
                         }
                     }
                 }
