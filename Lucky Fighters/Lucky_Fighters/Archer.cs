@@ -59,7 +59,7 @@ namespace Lucky_Fighters
                 {
                     if (!IsPlayerFriendly(otherPlayer))
                     {
-                        OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
+                        OnDamageDealt(otherPlayer.TakeDamage(this, BasicAttackDamage));
                     }
                 }
                 //attackRectangle = attackHitbox;

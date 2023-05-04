@@ -15,6 +15,7 @@ namespace Lucky_Fighters
     abstract class Player : AnimatedSprite
     {
         // constants
+        const float KnockbackFactor = 30f;
         const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
@@ -198,7 +199,7 @@ namespace Lucky_Fighters
         /// </summary>
         /// <param name="damage">Ranges from 0 to 100</param>
         /// <returns>Final damage taken</returns>
-        public float TakeDamage(float damage)
+        public float TakeDamage(Player attacker, float damage)
         {
             if (Game1.TestingMode)
                 damage *= 10;
@@ -226,6 +227,7 @@ namespace Lucky_Fighters
             }
 
             // damage to deal to the second health bar
+            Velocity.X += damage * KnockbackFactor / weightMultiplier * Math.Sign(Position.X - attacker.Position.X);
             float additionalHealthDamage = Math.Min(damage, AdditionalHealth);
             AdditionalHealth -= additionalHealthDamage;
             Health -= damage - additionalHealthDamage;

@@ -54,7 +54,7 @@ namespace Lucky_Fighters
                 {
                     if (!IsPlayerFriendly(otherPlayer))
 					{
-                        OnDamageDealt(otherPlayer.TakeDamage(BasicAttackDamage));
+                        OnDamageDealt(otherPlayer.TakeDamage(this, BasicAttackDamage));
 					}
 				}
                 // attackRectangle = attackHitbox;
@@ -83,7 +83,7 @@ namespace Lucky_Fighters
                 foreach (var otherPlayer in Map.GetCollidingPlayers(specialAttackHitbox)
                     .Where(otherPlayer => !IsPlayerFriendly(otherPlayer)))
                 {
-                    otherPlayer.TakeDamage(SpecialAttackDamage);
+                    otherPlayer.TakeDamage(this, SpecialAttackDamage);
                 }
 
                 //attackRectangle = specialAttackHitbox;

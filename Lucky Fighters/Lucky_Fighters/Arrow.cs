@@ -64,7 +64,7 @@ namespace Lucky_Fighters
             {
                 if (!player.IsPlayerFriendly(otherPlayer))
                 {
-                    player.OnDamageDealt(otherPlayer.TakeDamage(damage));
+                    player.OnDamageDealt(otherPlayer.TakeDamage(player, damage));
                     shouldRemove = true;
                     break;
                 }
