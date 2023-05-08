@@ -15,7 +15,7 @@ namespace Lucky_Fighters
     abstract class Player : AnimatedSprite
     {
         // constants
-        const float KnockbackFactor = 30f;
+        const float KnockbackFactor = 50f;
         const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
@@ -535,13 +535,16 @@ namespace Lucky_Fighters
             jumpingInput -= elapsed;
 
             // do the x velocity
-            Velocity.X += movement * (MoveAcceleration * weightMultiplier) * elapsed;
-            if (movement == 0)
-                Velocity.X *= 1 - DragFactor * elapsed * weightMultiplier;
             float maxSpeed = MaxMoveSpeed;
             if (sprinting)
                 maxSpeed *= SprintingMultiplier;
-            Velocity.X = MathHelper.Clamp(Velocity.X, -maxSpeed, maxSpeed);
+            if (movement == 0 || Math.Abs(Velocity.X) > maxSpeed)
+                Velocity.X *= 1 - DragFactor * elapsed * weightMultiplier;
+            else if (Math.Abs(Velocity.X) <= maxSpeed)
+			{
+                Velocity.X += movement * (MoveAcceleration * weightMultiplier) * elapsed;
+                Velocity.X = MathHelper.Clamp(Velocity.X, -maxSpeed, maxSpeed);
+            }
 
             Velocity.Y += (Gravity / weightMultiplier) * elapsed;
 
