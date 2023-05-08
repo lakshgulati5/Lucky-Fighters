@@ -31,6 +31,7 @@ namespace Lucky_Fighters
         string[] selectedFighters;
         Screen.Mode mode;
         int[] teams;
+        Player.CombatStats[] combatStats;
 
         public Game1()
         {
@@ -131,30 +132,20 @@ namespace Lucky_Fighters
                     else
                         SetScreen(new FighterSelection(Services, GameWidth, GameHeight, numOfPlayers, mode));
                 }
-                else if (screen.ReadyForNextScreen() && screen is Map) //go to results
+                else if (screen is Map) //go to results
                 {
                     Map alt = (Map)screen;
+                    combatStats = alt.GetCombatStats();
                     if (mode == Screen.Mode.Solo)
-                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end, combatStats));
                     else
-                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winningTeam, alt.end));
+                        SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winningTeam, alt.end, combatStats));
                     
                 }
-                else if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
+                else if (screen is Results) //loop back to beginning
                 {
                     SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
                 }
-            }
-
-            if (screen.ReadyForNextScreen() && screen is Map) //go to results
-            {
-                Map alt = (Map)screen;
-                SetScreen(new Results(Services, GameWidth, GameHeight, numOfPlayers, mode, alt.winner, alt.end));
-            }
-
-            if (screen.ReadyForNextScreen() && screen is Results) //loop back to beginning
-            {
-                SetScreen(new NumberOfPlayerSelection(Services, GameWidth, GameHeight));
             }
 
 

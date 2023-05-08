@@ -14,8 +14,19 @@ namespace Lucky_Fighters
 {
     abstract class Player : AnimatedSprite
     {
-        // constants
-        const float KnockbackFactor = 30f;
+        public class CombatStats
+		{
+            public float DamageDealt = 0f;
+            public float DamageBlocked = 0f;
+            public float DamageDodged = 0f;
+            public float DamageTaken = 0f;
+            public int LivesLost = 0;
+			public int PowerupsCollected = 0;
+            public int InteractivesUsed = 0;
+		}
+
+		// constants
+		const float KnockbackFactor = 30f;
         const float MoveAcceleration = 2000f;
         const float MaxMoveSpeed = 300f;
         const float DragFactor = 10f;
@@ -45,6 +56,7 @@ namespace Lucky_Fighters
         public GamePadState oldGamePad;
         KeyboardState oldKb;
         protected Map Map;
+        public CombatStats Stats;
 
         // combat and movement info
         public Vector2 Position;
@@ -141,7 +153,7 @@ namespace Lucky_Fighters
             blank = map.Content.Load<Texture2D>("blank");
             this.playerIndex = playerIndex;
             this.teamId = teamId;
-
+            Stats = new CombatStats();
             this.lives = lives;
 
             font = Map.Content.Load<SpriteFont>("SpriteFont1");
@@ -211,10 +223,14 @@ namespace Lucky_Fighters
                 return 0f;
 
             if (IsDodging || IsShielded)
+			{
+                Stats.DamageDodged += damage;
                 return 0f;
+			}
 
             if (IsBlocking)
             {
+                Stats.DamageBlocked += (1 - BlockDamageFactor) * damage;
                 damage *= BlockDamageFactor;
                 blockingTime = 0;
             }
@@ -225,6 +241,8 @@ namespace Lucky_Fighters
                 // also play the hurt animation
                 SetAndPlayAnimation("Hurt");
             }
+
+            Stats.DamageTaken += damage;
 
             // damage to deal to the second health bar
             Velocity.X += damage * KnockbackFactor / weightMultiplier * Math.Sign(Position.X - attacker.Position.X);
@@ -264,6 +282,7 @@ namespace Lucky_Fighters
         public void OnDamageDealt(float damageDealt)
         {
             IncrementLuck(damageDealt * LuckPerDamageDealt);
+            Stats.DamageDealt += damageDealt;
         }
 
         /// <summary>
@@ -473,6 +492,10 @@ namespace Lucky_Fighters
             foreach (var intersectingInteractive in intersection)
             {
                 Interactive interactive = Map.Interactives[intersectingInteractive];
+                if (!interactive.IsEnabled)
+				{
+                    continue;
+				}
                 interactive.ApplyEffect(this);
                 AddTask(new Task(20, () => { interactive.Enable(); }));
             }

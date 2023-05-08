@@ -12,6 +12,8 @@
 
             player.IsShielded = true;
             IsEnabled = false;
+            player.Stats.PowerupsCollected++;
+
             player.AddTask(
                 new Task(5, () => { player.IsShielded = false; })
             );

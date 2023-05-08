@@ -15,6 +15,8 @@
             if (player.Health + 30f > 100f) player.Health = 100f;
             else player.Health += 30f;
             IsEnabled = false;
+
+            player.Stats.InteractivesUsed++;
         }
     }
 }

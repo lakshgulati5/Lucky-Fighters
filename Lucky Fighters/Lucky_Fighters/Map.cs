@@ -504,6 +504,7 @@ namespace Lucky_Fighters
             player.OnKilled();
             // lives[index] -= 1;
             player.lives -= 1;
+            player.Stats.LivesLost++;
             if (player.lives < 1)
                 teams[index] = -1;
         }
@@ -598,5 +599,13 @@ namespace Lucky_Fighters
         {
             return Color.CornflowerBlue;
         }
+
+        public Player.CombatStats[] GetCombatStats()
+		{
+            Player.CombatStats[] stats = new Player.CombatStats[players.Length];
+            for (int i = 0; i < players.Length; i++)
+                stats[i] = players[i].Stats;
+            return stats;
+		}
     }
 }

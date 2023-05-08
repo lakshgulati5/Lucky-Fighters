@@ -12,6 +12,8 @@
 
             player.HasWings = true;
             IsEnabled = false;
+            player.Stats.PowerupsCollected++;
+
             player.AddTask(
                 new Task(10, () => { player.HasWings = false; })
             );
